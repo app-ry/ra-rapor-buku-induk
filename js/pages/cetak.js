@@ -182,6 +182,7 @@ window.Pages.cetak = (function() {
     wrap.style.cssText = 'position:absolute;left:0;top:0;width:210mm;background:#fff;opacity:0;pointer-events:none;z-index:-9999';
     wrap.innerHTML = muridIds.map(id => raporHTML(id, ta?.id, sem?.id)).join('');
     document.body.appendChild(wrap);
+    if (opts.zoom && opts.zoom !== 1) wrap.style.zoom = opts.zoom.toString();
 
     // Tambah pagebreak class manual untuk html2pdf
     wrap.querySelectorAll('.rapor-page').forEach((el, i) => {
@@ -252,8 +253,8 @@ window.Pages.cetak = (function() {
     return `
     <article class="rapor-page">
       <div class="rapor-header">
-        ${profil.logo_kemenag_dataurl
-          ? `<img src="${profil.logo_kemenag_dataurl}" alt="Logo Kemenag">`
+        ${profil.logo_ra_dataurl
+          ? `<img src="${profil.logo_ra_dataurl}" alt="Logo RA">`
           : `<div style="width:70px;height:70px"></div>`}
         <div class="text">
           ${profil.nama_yayasan ? `<div style="font-size:11pt;font-weight:600">${U.esc(profil.nama_yayasan.toUpperCase())}</div>` : `<div style="font-size:10.5pt">KEMENTERIAN AGAMA REPUBLIK INDONESIA</div>`}
@@ -261,9 +262,7 @@ window.Pages.cetak = (function() {
           <div class="alamat">${U.esc(alamat || '-')}</div>
           <div class="alamat-kecil">NSM: ${U.esc(profil.nsm||'-')} &mdash; NPSN: ${U.esc(profil.npsn||'-')}</div>
         </div>
-        ${profil.logo_ra_dataurl
-          ? `<img src="${profil.logo_ra_dataurl}" alt="Logo RA">`
-          : `<div style="width:70px;height:70px"></div>`}
+        <div style="width:70px;height:70px"></div>
       </div>
 
       <div class="rapor-title">Laporan Hasil Belajar Anak</div>

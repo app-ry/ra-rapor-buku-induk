@@ -43,8 +43,7 @@ window.Pages.cetak_induk = (function() {
     const iwrap = document.getElementById('indukContainer');
     if (izr) izr.oninput = () => {
       const v = parseInt(izr.value, 10); izl.textContent = v+'%';
-      iwrap.style.transform = `scale(${v/100})`;
-      iwrap.style.transformOrigin = 'top center';
+      iwrap.style.zoom = (v / 100).toString();
     };
 
     const btn = document.getElementById('btnInDukPDF');
@@ -55,6 +54,8 @@ window.Pages.cetak_induk = (function() {
       wrap.style.cssText = 'position:absolute;left:0;top:0;width:210mm;background:#fff;opacity:0;pointer-events:none;z-index:-9999';
       wrap.innerHTML = html;
       document.body.appendChild(wrap);
+      const z = parseInt(izr?.value || '100', 10) / 100;
+      if (z !== 1) wrap.style.zoom = z.toString();
       wrap.querySelectorAll('.induk-page').forEach((el, i) => {
         if (i > 0) el.classList.add('html2pdf__page-break');
       });
@@ -93,14 +94,14 @@ window.Pages.cetak_induk = (function() {
     return `
     <article class="rapor-page induk-page">
       <div class="rapor-header">
-        ${profil.logo_kemenag_dataurl ? `<img src="${profil.logo_kemenag_dataurl}" alt="">` : `<div style="width:60px;height:60px"></div>`}
+        ${profil.logo_ra_dataurl ? `<img src="${profil.logo_ra_dataurl}" alt="">` : `<div style="width:60px;height:60px"></div>`}
         <div class="text">
           ${profil.nama_yayasan ? `<div style="font-size:10.5pt;font-weight:600">${U.esc(profil.nama_yayasan.toUpperCase())}</div>` : `<div style="font-size:10pt">KEMENTERIAN AGAMA REPUBLIK INDONESIA</div>`}
           <h2>${U.esc(profil.nama || 'RAUDHATUL ATHFAL')}</h2>
           <div class="alamat">${U.esc(profil.alamat||'')}, ${U.esc(profil.desa||'')}, ${U.esc(profil.kec||'')}, ${U.esc(profil.kab||'')}, ${U.esc(profil.prov||'')}</div>
           <div class="alamat" style="font-size:9pt">NSM: ${U.esc(profil.nsm||'-')} &mdash; NPSN: ${U.esc(profil.npsn||'-')}</div>
         </div>
-        ${profil.logo_ra_dataurl ? `<img src="${profil.logo_ra_dataurl}" alt="">` : `<div style="width:60px;height:60px"></div>`}
+        <div style="width:60px;height:60px"></div>
       </div>
 
       <div class="rapor-title">Buku Induk Peserta Didik</div>
@@ -273,14 +274,14 @@ window.Pages.cetak_induk = (function() {
     let html = `
     <article class="rapor-page induk-page" style="page-break-before:always">
       <div class="rapor-header">
-        ${profil.logo_kemenag_dataurl ? `<img src="${profil.logo_kemenag_dataurl}" alt="">` : `<div style="width:60px;height:60px"></div>`}
+        ${profil.logo_ra_dataurl ? `<img src="${profil.logo_ra_dataurl}" alt="">` : `<div style="width:60px;height:60px"></div>`}
         <div class="text">
           ${profil.nama_yayasan ? `<div style="font-size:10.5pt;font-weight:600">${U.esc(profil.nama_yayasan.toUpperCase())}</div>` : ''}
           <h2>${U.esc(profil.nama || 'RAUDHATUL ATHFAL')}</h2>
           <div class="alamat">${U.esc(profil.alamat||'')}, ${U.esc(profil.desa||'')}, ${U.esc(profil.kec||'')}, ${U.esc(profil.kab||'')}, ${U.esc(profil.prov||'')}</div>
           <div class="alamat" style="font-size:9pt">NSM: ${U.esc(profil.nsm||'-')} \u2014 NPSN: ${U.esc(profil.npsn||'-')}</div>
         </div>
-        ${profil.logo_ra_dataurl ? `<img src="${profil.logo_ra_dataurl}" alt="">` : `<div style="width:60px;height:60px"></div>`}
+        <div style="width:60px;height:60px"></div>
       </div>
 
       <div class="rapor-title">Nilai Siswa</div>

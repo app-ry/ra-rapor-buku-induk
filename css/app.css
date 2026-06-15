@@ -207,9 +207,5 @@ input.form-control:focus, select.form-select:focus, textarea.form-control:focus 
 .modal-header .btn-close { filter: invert(1); }
 
 .rapor-zoom-wrap {
-  transition: transform 0.2s ease-out;
-  transform-origin: top center;
-}
-@media print {
-  .rapor-zoom-wrap { transform: none !important; }
+  transition: zoom 0.15s ease-out;
 }
