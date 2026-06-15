@@ -1,4 +1,5 @@
 // narasi.js — generator deskripsi rapor & refleksi otomatis
+// Mengikuti pola Yanto: BSB/BSH/MB/BB per indikator, pakai catatan observasi & rekomendasi dari detail asesmen
 window.Narasi = (function() {
   const ELEMEN_LABEL = {
     nilai_agama:'Nilai Agama dan Budi Pekerti',
@@ -7,11 +8,11 @@ window.Narasi = (function() {
     kokurikuler:'Kokurikuler'
   };
 
-  // Saran tindak lanjut per elemen
+  // Saran tindak lanjut default per elemen (digunakan kalau guru tidak isi rekomendasi manual)
   const SARAN = {
     nilai_agama: [
       'membiasakan doa harian sebelum makan, tidur, dan kegiatan sehari-hari',
-      'mengenalkan bacaan-bacaan thayyibah seperti tasbih, tahmid, dan takbir',
+      'mengenalkan bacaan thayyibah seperti tasbih, tahmid, dan takbir',
       'mengajak Ananda menirukan gerakan ibadah sederhana bersama keluarga',
       'memberi teladan akhlak yang baik dalam kehidupan sehari-hari',
       'mengajak Ananda merawat tanaman atau hewan peliharaan sebagai bentuk cinta lingkungan'
@@ -20,7 +21,7 @@ window.Narasi = (function() {
       'memberi kesempatan bercerita tentang kegiatan hariannya',
       'membiasakan Ananda mengurus dirinya sendiri secara bertahap',
       'mengajak bermain peran untuk melatih kemandirian dan empati',
-      'menyediakan kegiatan motorik halus seperti meronce, menggunting, dan menggambar di rumah',
+      'menyediakan kegiatan motorik halus seperti meronce, menggunting, dan menggambar',
       'mengajak bermain gerak di luar rumah seperti berlari, melompat, dan bersepeda',
       'membiasakan pola hidup sehat: makan teratur, cukup tidur, dan rajin mencuci tangan'
     ],
@@ -28,7 +29,7 @@ window.Narasi = (function() {
       'membacakan buku cerita bergambar setiap hari',
       'mengajak Ananda mengenali huruf dan angka melalui permainan',
       'menyediakan buku, kertas, dan alat tulis untuk pra-menulis',
-      'mengajak menghitung benda di sekitar rumah',
+      'mengajak menghitung benda-benda di sekitar rumah',
       'memberi kesempatan bereksplorasi dengan bahan-bahan alami',
       'mengajak bernyanyi, menggambar, dan membuat karya seni sederhana',
       'mendampingi penggunaan gawai secara terbatas dan edukatif'
@@ -42,8 +43,8 @@ window.Narasi = (function() {
     ]
   };
 
-  // Variasi pembuka
-  const PEMBUKA_TEMPLATES = {
+  // Pembuka per elemen (variasi)
+  const PEMBUKA = {
     nilai_agama: [
       'Pada semester ini, Ananda %NAMA% menunjukkan perkembangan yang membahagiakan dalam aspek nilai agama dan budi pekerti.',
       'Ananda %NAMA% terus tumbuh dalam pembiasaan religius dan akhlak mulia selama mengikuti kegiatan di RA.',
@@ -66,122 +67,239 @@ window.Narasi = (function() {
     ]
   };
 
-  // Frase penghubung capaian
-  function frasaCapaian(c) {
-    return ({
-      BSB:'sangat baik dan konsisten',
-      BSH:'baik dan sesuai harapan',
-      MB:'mulai berkembang',
-      BB:'berada pada tahap awal'
-    })[c] || c;
+  // Daftar kata negatif yang harus dihindari (final scrub)
+  const KATA_NEGATIF = [
+    /\bgagal\b/gi, /\bburuk\b/gi, /\btidak mampu\b/gi, /\blemah\b/gi,
+    /\bbermasalah\b/gi, /\bnakal\b/gi, /\blambat\b/gi, /\bkurang\b/gi,
+    /\bbodoh\b/gi, /\bmalas\b/gi
+  ];
+  const KATA_NEGATIF_PENGGANTI = {
+    'gagal':'belum berhasil',
+    'buruk':'belum optimal',
+    'tidak mampu':'masih perlu dukungan',
+    'lemah':'masih perlu dikuatkan',
+    'bermasalah':'memerlukan pendampingan',
+    'nakal':'aktif',
+    'lambat':'sedang berkembang',
+    'kurang':'masih perlu',
+    'bodoh':'sedang belajar',
+    'malas':'masih perlu dimotivasi'
+  };
+  function scrubNegatif(s) {
+    if (!s) return s;
+    let out = String(s);
+    KATA_NEGATIF.forEach(rx => {
+      out = out.replace(rx, m => KATA_NEGATIF_PENGGANTI[m.toLowerCase()] || 'masih perlu dikembangkan');
+    });
+    return out;
+  }
+
+  // Bersihkan teks indikator menjadi frasa pendek (untuk disisipkan di kalimat)
+  function frasaIndikator(teks) {
+    return String(teks||'')
+      .replace(/^Anak\s+/i,'')
+      .replace(/\.$/,'')
+      .replace(/^[A-Z]/, c => c.toLowerCase());
+  }
+
+  // Bersihkan catatan observasi agar muat di pola "ketika [catatan]"
+  function frasaCatatan(catatan) {
+    if (!catatan) return '';
+    let s = String(catatan).trim();
+    s = s.replace(/\.$/,'');
+    // Lowercase huruf pertama untuk natural flow setelah "ketika"
+    s = s.charAt(0).toLowerCase() + s.slice(1);
+    return s;
   }
 
   function pickRand(arr, seed) {
     if (!arr || !arr.length) return '';
     if (seed != null) return arr[Math.abs(seed) % arr.length];
-    return arr[Math.floor(Math.random()*arr.length)];
+    return arr[Math.floor(Math.random() * arr.length)];
   }
 
-  // Hitung distribusi capaian per elemen
-  function ringkas(asesArr, indikatorMap) {
-    const byElemen = {};
-    asesArr.forEach(a => {
-      const ind = indikatorMap[a.indikator_id];
-      if (!ind) return;
-      if (!byElemen[ind.elemen]) byElemen[ind.elemen] = { items: [], dist:{ BB:0, MB:0, BSH:0, BSB:0 } };
-      byElemen[ind.elemen].items.push({ ...a, _ind: ind });
-      byElemen[ind.elemen].dist[a.capaian] = (byElemen[ind.elemen].dist[a.capaian] || 0) + 1;
-    });
-    return byElemen;
+  // ============================================================
+  // POLA NARASI per CAPAIAN (sesuai brief Yanto)
+  // ============================================================
+  function kalimatPerCapaian(nama, capaian, indikatorTeks, catatan, rekomendasi, elemen, seed) {
+    const ind = frasaIndikator(indikatorTeks);
+    const cat = frasaCatatan(catatan);
+    const saran = rekomendasi && rekomendasi.trim() ? rekomendasi.trim().replace(/\.$/,'') : pickRand(SARAN[elemen]||[], seed);
+
+    if (capaian === 'BSB') {
+      const ketika = cat
+        ? `Hal ini tampak ketika ${cat}.`
+        : 'Hal ini tampak dalam keseharian Ananda di RA.';
+      return `Ananda ${nama} menunjukkan perkembangan yang sangat baik dalam ${ind}. ${ketika} Ananda sudah mampu melakukan kegiatan tersebut secara mandiri dan konsisten. Di rumah, Ayah dan Ibu dapat terus memberi kesempatan kepada Ananda untuk mempraktikkan kemampuan ini dalam kegiatan sehari-hari.`;
+    }
+    if (capaian === 'BSH') {
+      const terlihat = cat
+        ? `Hal ini terlihat saat ${cat}.`
+        : 'Hal ini terlihat dalam berbagai kegiatan kelas.';
+      return `Ananda ${nama} menunjukkan perkembangan yang baik dalam ${ind}. ${terlihat} Ananda mulai mampu melakukan kegiatan dengan percaya diri dan sesuai harapan. Stimulasi di rumah dapat dilakukan melalui kegiatan sederhana seperti ${saran}.`;
+    }
+    if (capaian === 'MB') {
+      const mencoba = cat
+        ? `Dalam beberapa kegiatan, Ananda sudah mencoba untuk ${cat}, meskipun masih memerlukan pendampingan guru.`
+        : `Dalam beberapa kegiatan, Ananda sudah mulai mencoba ${ind}, meskipun masih memerlukan pendampingan guru.`;
+      return `Ananda ${nama} mulai menunjukkan perkembangan dalam ${ind}. ${mencoba} Ayah dan Ibu dapat membantu menstimulasi kemampuan ini melalui kegiatan bermain yang menyenangkan di rumah, misalnya ${saran}.`;
+    }
+    if (capaian === 'BB') {
+      return `Ananda ${nama} sedang berada pada tahap awal dalam mengembangkan kemampuan ${ind}. Ananda masih memerlukan dukungan dan pembiasaan secara bertahap. Guru dan orang tua dapat bekerja sama memberikan stimulasi melalui kegiatan yang sederhana, menyenangkan, dan dilakukan secara berulang, seperti ${saran}.`;
+    }
+    return '';
   }
 
-  // Generate paragraf untuk satu elemen
-  function paragrafElemen(nama, elemen, data, namaSeed) {
-    const { items, dist } = data;
-    const total = items.length || 1;
-    const kuat = items.filter(x => x.capaian === 'BSB' || x.capaian === 'BSH');
-    const lemah = items.filter(x => x.capaian === 'MB' || x.capaian === 'BB');
+  // ============================================================
+  // PARAGRAF per ELEMEN
+  // ============================================================
+  function paragrafElemen(nama, elemen, items, namaSeed) {
+    if (!items || !items.length) {
+      return `Ananda ${nama} terus mengikuti kegiatan pembelajaran di kelas dengan antusias. Ayah dan Ibu dapat mendukung perkembangan Ananda melalui pembiasaan-pembiasaan sederhana di rumah.`;
+    }
 
-    // Pembuka
-    const pembuka = pickRand(PEMBUKA_TEMPLATES[elemen], namaSeed).replace(/%NAMA%/g, nama);
+    // Group per capaian
+    const byCap = { BSB:[], BSH:[], MB:[], BB:[] };
+    items.forEach(it => { (byCap[it.capaian] || (byCap[it.capaian] = [])).push(it); });
 
-    // Isi capaian
-    let isi = '';
-    if (kuat.length > 0) {
-      const sample = kuat.slice(0, 4).map(x => x._ind.teks.replace(/^Anak /,'').replace(/\.$/,''));
+    const paragraf = [];
+
+    // P1: Pembuka
+    const pembuka = pickRand(PEMBUKA[elemen]||[], namaSeed).replace(/%NAMA%/g, nama);
+
+    // P1 lanjutan: ringkasan kekuatan (BSB+BSH)
+    const kuat = [...byCap.BSB, ...byCap.BSH];
+    if (kuat.length) {
+      const sample = kuat.slice(0, 5).map(it => frasaIndikator(it.indikatorTeks));
       const list = sample.length === 1 ? sample[0]
                   : sample.length === 2 ? sample.join(' dan ')
-                  : sample.slice(0, -1).join(', ') + ', serta ' + sample.slice(-1)[0];
-      isi += `Ananda ${nama} sudah ${list}. `;
-      const dom = (dist.BSB > dist.BSH) ? 'BSB' : 'BSH';
-      isi += `Capaian ini menunjukkan perkembangan yang ${frasaCapaian(dom)}. `;
-    }
-    if (lemah.length > 0) {
-      const sample = lemah.slice(0, 3).map(x => x._ind.teks.toLowerCase().replace(/^anak /,'').replace(/\.$/,''));
-      const list = sample.length === 1 ? sample[0]
-                  : sample.length === 2 ? sample.join(' dan ')
-                  : sample.slice(0, -1).join(', ') + ', serta ' + sample.slice(-1)[0];
-      isi += `Untuk aspek ${list}, Ananda ${nama} masih memerlukan dukungan dan pembiasaan secara bertahap. `;
-    }
-    if (!isi) {
-      isi = `Ananda ${nama} terus mengikuti kegiatan pembelajaran di kelas dengan baik. `;
+                  : sample.slice(0,-1).join(', ') + ', serta ' + sample.slice(-1)[0];
+      paragraf.push(`${pembuka} Ananda ${nama} telah ${list}.`);
+    } else {
+      paragraf.push(pembuka);
     }
 
-    // Tindak lanjut
-    const saranArr = SARAN[elemen] || [];
-    const s1 = pickRand(saranArr, namaSeed);
-    const s2 = pickRand(saranArr, (namaSeed||0) + 7);
-    const tindakLanjut = `Di rumah, Ayah dan Ibu dapat membantu menstimulasi perkembangan Ananda dengan ${s1}${s1 !== s2 ? ', serta ' + s2 : ''}. Pembiasaan yang dilakukan secara konsisten dan menyenangkan akan sangat membantu pertumbuhan Ananda.`;
+    // P2: Detail kekuatan utama (1-2 BSB/BSH terdetail dengan catatan observasi)
+    const detail = kuat
+      .filter(it => it.catatan || it.rekomendasi || it.capaian === 'BSB')
+      .slice(0, 2);
+    if (detail.length) {
+      const kalimat = detail
+        .map((it, idx) => kalimatPerCapaian(nama, it.capaian, it.indikatorTeks, it.catatan, it.rekomendasi, elemen, namaSeed + idx))
+        .filter(Boolean)
+        .join(' ');
+      if (kalimat) paragraf.push(kalimat);
+    }
 
-    return [pembuka, isi.trim(), tindakLanjut].filter(Boolean).join(' \n\n');
+    // P3: Yang masih berkembang (MB)
+    if (byCap.MB.length) {
+      const it = byCap.MB[0];
+      paragraf.push(kalimatPerCapaian(nama, 'MB', it.indikatorTeks, it.catatan, it.rekomendasi, elemen, namaSeed + 10));
+    }
+
+    // P4: Tahap awal (BB) atau saran tindak lanjut umum
+    if (byCap.BB.length) {
+      const it = byCap.BB[0];
+      paragraf.push(kalimatPerCapaian(nama, 'BB', it.indikatorTeks, it.catatan, it.rekomendasi, elemen, namaSeed + 20));
+    } else if (paragraf.length < 3) {
+      // Tambah saran tindak lanjut umum kalau paragraf masih kurang dari 3
+      const s1 = pickRand(SARAN[elemen]||[], namaSeed);
+      const s2 = pickRand(SARAN[elemen]||[], namaSeed + 7);
+      paragraf.push(`Sebagai bentuk dukungan di rumah, Ayah dan Ibu dapat ${s1}${s1!==s2?', serta '+s2:''}. Pembiasaan yang dilakukan secara konsisten dan menyenangkan akan sangat membantu pertumbuhan Ananda.`);
+    }
+
+    // Maksimal 4 paragraf
+    return paragraf.slice(0, 4).map(scrubNegatif).join('\n\n');
   }
 
-  // Main: generate semua deskripsi rapor
+  // ============================================================
+  // MAIN: Generate semua deskripsi rapor
+  // ============================================================
   function generateRapor(murid, asesArr, indikatorList) {
-    const indikatorMap = {};
-    indikatorList.forEach(i => indikatorMap[i.id] = i);
-    const ring = ringkas(asesArr, indikatorMap);
+    const indMap = {}; indikatorList.forEach(i => indMap[i.id] = i);
+
+    // Build items per elemen
+    const byElemen = { nilai_agama:[], jati_diri:[], literasi:[], kokurikuler:[] };
+    asesArr.forEach(a => {
+      const ind = indMap[a.indikator_id];
+      if (!ind || !byElemen[ind.elemen]) return;
+      byElemen[ind.elemen].push({
+        capaian: a.capaian,
+        catatan: a.catatan || '',
+        rekomendasi: a.rekomendasi || '',
+        indikatorTeks: ind.teks,
+        indikatorKode: ind.kode || ''
+      });
+    });
+
     const nama = murid.nama_panggilan || murid.nama_lengkap || 'Ananda';
-    const seed = (murid.id || '').split('').reduce((a,c) => a + c.charCodeAt(0), 0);
+    const seed = (murid.id || nama).split('').reduce((a,c) => a + c.charCodeAt(0), 0);
+
     const out = {};
     Object.keys(ELEMEN_LABEL).forEach(el => {
-      out[el] = paragrafElemen(nama, el, ring[el] || { items:[], dist:{BB:0,MB:0,BSH:0,BSB:0} }, seed);
+      out[el] = paragrafElemen(nama, el, byElemen[el], seed);
     });
     return out;
   }
 
-  // Refleksi orang tua
+  // ============================================================
+  // Refleksi orang tua otomatis
+  // ============================================================
   function generateRefleksi(murid, asesArr, indikatorList) {
-    const indikatorMap = {};
-    indikatorList.forEach(i => indikatorMap[i.id] = i);
+    const indMap = {}; indikatorList.forEach(i => indMap[i.id] = i);
     const nama = murid.nama_panggilan || murid.nama_lengkap || 'Ananda';
-    const kuat = asesArr.filter(a => a.capaian === 'BSB' || a.capaian === 'BSH').slice(0, 3)
-      .map(a => indikatorMap[a.indikator_id])
+
+    const kuat = asesArr
+      .filter(a => a.capaian === 'BSB' || a.capaian === 'BSH')
+      .slice(0, 3)
+      .map(a => indMap[a.indikator_id])
       .filter(Boolean)
-      .map(i => i.teks.replace(/^Anak /,'').replace(/\.$/,''));
-    const lemah = asesArr.filter(a => a.capaian === 'BB' || a.capaian === 'MB').slice(0, 3)
-      .map(a => indikatorMap[a.indikator_id])
+      .map(i => frasaIndikator(i.teks));
+
+    const lemah = asesArr
+      .filter(a => a.capaian === 'BB' || a.capaian === 'MB')
+      .slice(0, 3)
+      .map(a => indMap[a.indikator_id])
       .filter(Boolean)
-      .map(i => i.teks.toLowerCase().replace(/^anak /,'').replace(/\.$/,''));
+      .map(i => frasaIndikator(i.teks));
+
+    const joinList = (arr) => {
+      if (arr.length === 0) return '';
+      if (arr.length === 1) return arr[0];
+      if (arr.length === 2) return arr.join(' dan ');
+      return arr.slice(0,-1).join(', ') + ', serta ' + arr.slice(-1)[0];
+    };
 
     const q1 = kuat.length
-      ? `Ananda ${nama} sudah ${kuat.length===1?kuat[0]:kuat.slice(0,-1).join(', ')+(kuat.length>1?', dan '+kuat[kuat.length-1]:kuat[0])}. Ananda juga semakin percaya diri, mandiri, dan senang berinteraksi dengan teman-temannya.`
+      ? `Ananda ${nama} sudah ${joinList(kuat)}. Ananda juga semakin percaya diri, mandiri, dan senang berinteraksi dengan teman-temannya di RA.`
       : `Ananda ${nama} menunjukkan perkembangan positif dalam kegiatan sehari-hari di RA.`;
 
     const q2 = lemah.length
-      ? `Ananda ${nama} masih perlu distimulasi untuk ${lemah.length===1?lemah[0]:lemah.slice(0,-1).join(', ')+(lemah.length>1?', dan '+lemah[lemah.length-1]:lemah[0])}.`
+      ? `Ananda ${nama} masih perlu distimulasi untuk ${joinList(lemah)}.`
       : `Ananda ${nama} masih perlu dibiasakan untuk menyelesaikan tugas hingga tuntas dan mengelola emosi dengan lebih baik.`;
 
     const q3 = `Saya akan membacakan buku cerita, mengajak bermain gerak, membiasakan doa harian, dan memberi kesempatan kepada Ananda ${nama} untuk berlatih kemandirian dalam kegiatan sehari-hari di rumah.`;
 
-    return { q1, q2, q3 };
+    return {
+      q1: scrubNegatif(q1),
+      q2: scrubNegatif(q2),
+      q3: scrubNegatif(q3)
+    };
   }
 
+  // ============================================================
   // Default info perkembangan
+  // ============================================================
   function defaultInfoPerkembangan(murid) {
     const nama = murid.nama_panggilan || murid.nama_lengkap || 'Ananda';
-    return `Ananda ${nama} dalam kondisi sehat dan menunjukkan daya tahan tubuh yang baik selama mengikuti kegiatan di RA. Imunisasi yang sudah diberikan tercatat lengkap. Pola makan Ananda teratur dan kebiasaan positif seperti mencuci tangan sebelum makan, berdoa sebelum kegiatan, serta mengucapkan salam sudah mulai terbentuk. Bagi Ayah dan Ibu, mohon terus mendukung pembiasaan tersebut di rumah.`;
+    return scrubNegatif(`Ananda ${nama} dalam kondisi sehat dan menunjukkan daya tahan tubuh yang baik selama mengikuti kegiatan di RA. Imunisasi yang sudah diberikan tercatat lengkap. Pola makan Ananda teratur dan kebiasaan positif seperti mencuci tangan sebelum makan, berdoa sebelum kegiatan, serta mengucapkan salam sudah mulai terbentuk. Bagi Ayah dan Ibu, mohon terus mendukung pembiasaan tersebut di rumah.`);
   }
 
-  return { generateRapor, generateRefleksi, defaultInfoPerkembangan, ELEMEN_LABEL };
+  return {
+    generateRapor,
+    generateRefleksi,
+    defaultInfoPerkembangan,
+    scrubNegatif,
+    ELEMEN_LABEL
+  };
 })();
