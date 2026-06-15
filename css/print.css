@@ -1,90 +1,222 @@
-@page { size: A4 portrait; margin: 12mm; }
+@page { size: A4 portrait; margin: 12mm 14mm; }
 
 @media print {
   body { background: #fff !important; }
   #loginScreen, .topbar, .sidebar, #toastContainer, .no-print, .btn { display: none !important; }
   .main-content { margin-left: 0 !important; padding: 0 !important; }
-  .panel { box-shadow: none !important; padding: 0 !important; margin: 0 !important; }
+  .panel { box-shadow: none !important; padding: 0 !important; margin: 0 !important; background: transparent !important; }
+  .rapor-page, .induk-page {
+    box-shadow: none !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+  }
   .rapor-page { page-break-after: always; }
   .rapor-page:last-child { page-break-after: auto; }
 }
 
+/* ================================================================ */
+/* Layout dasar lembar A4                                            */
+/* ================================================================ */
 .rapor-page {
   background: #fff; color: #000;
   font-family: "Times New Roman", Times, serif;
   font-size: 11pt;
   line-height: 1.45;
-  max-width: 210mm;
-  margin: 0 auto 20px;
-  padding: 18mm 16mm;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto 24px;
+  padding: 16mm 14mm 18mm;
+  box-shadow: 0 2px 14px rgba(0,0,0,0.12);
+  box-sizing: border-box;
 }
 
+/* ================================================================ */
+/* Header rapor (Kemenag + Identitas RA + Logo RA)                   */
+/* ================================================================ */
 .rapor-page .rapor-header {
-  display: flex; align-items: center; gap: 16px;
+  display: grid;
+  grid-template-columns: 70px 1fr 70px;
+  align-items: center;
+  gap: 12px;
   border-bottom: 3px double #000;
-  padding-bottom: 10px; margin-bottom: 16px;
+  padding-bottom: 8px;
+  margin-bottom: 14px;
 }
-.rapor-page .rapor-header img { width: 60px; height: 60px; object-fit: contain; }
-.rapor-page .rapor-header .text { flex: 1; text-align: center; }
-.rapor-page .rapor-header h2 { margin: 0; font-size: 14pt; font-weight: 700; }
-.rapor-page .rapor-header .alamat { font-size: 10pt; }
+.rapor-page .rapor-header img {
+  width: 70px; height: 70px; object-fit: contain;
+}
+.rapor-page .rapor-header .text { text-align: center; }
+.rapor-page .rapor-header h2 {
+  margin: 4px 0 2px;
+  font-size: 15pt; font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.rapor-page .rapor-header .alamat { font-size: 10pt; line-height: 1.3; }
+.rapor-page .rapor-header .alamat-kecil { font-size: 9pt; line-height: 1.3; }
 
+/* ================================================================ */
+/* Judul & Identitas Anak                                            */
+/* ================================================================ */
 .rapor-title {
-  text-align: center; font-weight: 700;
-  font-size: 13pt; text-transform: uppercase;
-  letter-spacing: 1px; margin: 12px 0 16px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 13pt;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin: 14px 0 4px;
+  text-decoration: underline;
+}
+.rapor-subtitle {
+  text-align: center;
+  font-size: 11pt;
+  margin-bottom: 16px;
 }
 
-.rapor-id-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
-.rapor-id-table td { padding: 4px 6px; font-size: 11pt; vertical-align: top; }
+.rapor-id-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 14px;
+}
+.rapor-id-table td {
+  padding: 3px 6px;
+  font-size: 11pt;
+  vertical-align: top;
+}
 .rapor-id-table td.lbl { width: 30%; }
 .rapor-id-table td.sep { width: 2%; text-align: center; }
+.rapor-id-table td.val { width: 18%; }
 
-.elemen-block { margin-bottom: 16px; page-break-inside: avoid; }
+/* ================================================================ */
+/* Section: Header hijau + Body border hitam                          */
+/* ================================================================ */
+.elemen-block {
+  margin-bottom: 12px;
+  page-break-inside: avoid;
+}
 .elemen-head {
-  background: #2e7d32; color: #fff;
-  padding: 6px 12px; font-weight: 700;
-  font-size: 11pt; letter-spacing: 0.3px;
+  background: #2e7d32;
+  color: #fff;
+  padding: 6px 12px;
+  font-weight: 700;
+  font-size: 11.5pt;
+  letter-spacing: 0.3px;
+  border: 1px solid #000;
+  border-bottom: none;
 }
 .elemen-body {
-  border: 1.5px solid #2e7d32; padding: 10px 12px;
+  border: 1px solid #000;
+  padding: 10px 14px;
   text-align: justify;
+  font-size: 11pt;
+  line-height: 1.55;
 }
-.elemen-body p { margin: 0 0 8px; }
+.elemen-body p { margin: 0 0 8px; text-indent: 0; }
 .elemen-body p:last-child { margin: 0; }
 
+/* ================================================================ */
+/* Refleksi Orang Tua                                                */
+/* ================================================================ */
+.refleksi-block {
+  border: 1px solid #000;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+}
+.refleksi-block:last-child { margin-bottom: 0; }
+.refleksi-block .q {
+  font-weight: 700;
+  margin-bottom: 4px;
+  font-size: 11pt;
+}
+.refleksi-block .a {
+  font-size: 11pt;
+  text-align: justify;
+  line-height: 1.5;
+}
+
+/* ================================================================ */
+/* Informasi perkembangan & Kehadiran                                */
+/* ================================================================ */
+.info-block {
+  border: 1px solid #000;
+  padding: 10px 14px;
+  text-align: justify;
+  font-size: 11pt;
+  line-height: 1.55;
+}
+
 .kehadiran-table {
-  width: 60%; border-collapse: collapse; margin: 12px 0;
+  width: 70%;
+  border-collapse: collapse;
+  margin: 8px 0 4px;
+  font-size: 11pt;
 }
 .kehadiran-table th, .kehadiran-table td {
-  border: 1px solid #000; padding: 6px 10px; text-align: center;
+  border: 1px solid #000;
+  padding: 6px 12px;
+  text-align: center;
 }
-.kehadiran-table th { background: #e8f5e9; }
+.kehadiran-table th { background: #2e7d32; color: #fff; font-weight: 700; }
+.kehadiran-table td.no { width: 8%; }
 
+/* ================================================================ */
+/* Tanda Tangan                                                       */
+/* ================================================================ */
+.ttd-tempat {
+  text-align: right;
+  margin-top: 22px;
+  font-size: 11pt;
+}
 .ttd-grid {
-  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;
-  margin-top: 30px; text-align: center;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  margin-top: 6px;
+  text-align: center;
 }
 .ttd-grid .col-ttd { font-size: 11pt; }
-.ttd-grid .col-ttd .role { margin-bottom: 60px; }
-.ttd-grid .col-ttd .nama { border-top: 1px solid #000; padding-top: 4px; font-weight: 700; }
-.ttd-tempat { text-align: right; margin-top: 16px; }
+.ttd-grid .col-ttd .role {
+  font-weight: 600;
+  margin-bottom: 60px;
+  line-height: 1.3;
+}
+.ttd-grid .col-ttd .ttd-img {
+  height: 50px;
+  margin-top: -50px;
+  margin-bottom: 6px;
+}
+.ttd-grid .col-ttd .nama {
+  border-top: 1px solid #000;
+  padding-top: 4px;
+  font-weight: 700;
+}
+.ttd-grid .col-ttd .nip {
+  font-size: 9.5pt;
+  font-weight: normal;
+  margin-top: 2px;
+}
 
-.refleksi-block { border: 1px solid #999; padding: 10px 12px; margin-bottom: 10px; }
-.refleksi-block .q { font-weight: 600; margin-bottom: 4px; }
-
-.info-block { border: 1px solid #999; padding: 10px 12px; }
-
-/* ===== Buku Induk Cetak ===== */
-.induk-page { font-size: 10.5pt; }
+/* ================================================================ */
+/* Buku Induk Cetak                                                  */
+/* ================================================================ */
+.induk-page {
+  background: #fff; color: #000;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 10.5pt;
+  line-height: 1.45;
+  width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto 24px;
+  padding: 16mm 14mm 18mm;
+  box-shadow: 0 2px 14px rgba(0,0,0,0.12);
+  box-sizing: border-box;
+}
 .induk-foto-row {
   display: flex; gap: 14px; margin: 14px 0 16px;
   align-items: stretch;
 }
 .induk-foto-box {
   width: 90px; min-height: 110px;
-  border: 1.5px solid #2e7d32;
+  border: 1.5px solid #000;
   display: flex; align-items: center; justify-content: center;
   background: #fafafa; flex-shrink: 0;
 }
@@ -94,11 +226,11 @@
 }
 .induk-summary {
   flex: 1; border-collapse: collapse;
-  border: 1px solid #2e7d32;
+  border: 1px solid #000;
 }
 .induk-summary td {
   padding: 4px 8px; font-size: 10.5pt; vertical-align: top;
-  border-bottom: 1px solid #d4e6d4;
+  border-bottom: 1px solid #999;
 }
 .induk-summary td.lbl { width: 35%; background: #e8f5e9; font-weight: 500; }
 .induk-summary td.sep { width: 4%; }
@@ -109,23 +241,25 @@
   background: #2e7d32; color: #fff;
   padding: 5px 10px; font-weight: 700;
   font-size: 10.5pt; letter-spacing: 0.3px;
+  border: 1px solid #000;
+  border-bottom: none;
 }
 .induk-table {
   width: 100%; border-collapse: collapse;
-  border: 1.5px solid #2e7d32;
+  border: 1px solid #000;
 }
 .induk-table th {
   background: #e8f5e9; padding: 5px 8px;
-  font-size: 10pt; text-align: left; border: 1px solid #c8e6c9;
+  font-size: 10pt; text-align: left; border: 1px solid #999;
 }
 .induk-table td {
   padding: 4px 8px; font-size: 10pt; vertical-align: top;
-  border: 1px solid #c8e6c9;
+  border: 1px solid #999;
 }
 .induk-table td.lbl { background: #f5f5f5; font-weight: 500; width: 18%; }
 .induk-table td.sep { width: 2%; }
 .induk-catatan {
-  border: 1.5px solid #2e7d32; border-top: none;
+  border: 1px solid #000; border-top: none;
   padding: 10px 12px; font-size: 10pt;
   text-align: justify; min-height: 40px;
 }

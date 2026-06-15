@@ -1,5 +1,5 @@
 // Service Worker — Aplikasi Rapor & Buku Induk RA
-const CACHE = 'ra-v1-2026-06-15-r4';
+const CACHE = 'ra-v1-2026-06-15-r5';
 const SHELL = [
   './',
   './index.html',

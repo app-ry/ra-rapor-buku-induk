@@ -21,13 +21,40 @@ window.Pages.cetak_induk = (function() {
 
     const html = muridIds.map(id => indukHTML(id)).filter(Boolean).join('');
     root.innerHTML = `
-      <div class="d-flex justify-content-between align-items-center mb-3 no-print">
+      <div class="d-flex justify-content-between align-items-center mb-3 no-print flex-wrap gap-2">
         <a href="#/buku-induk" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Kembali</a>
         <div class="text-muted small">${muridIds.length} buku induk siap cetak</div>
-        <button class="btn btn-success btn-sm" onclick="window.print()"><i class="bi bi-printer"></i> Cetak / Save as PDF</button>
+        <div class="d-flex gap-2">
+          <button class="btn btn-outline-success btn-sm" id="btnInDukPDF"><i class="bi bi-file-earmark-pdf"></i> Download PDF</button>
+          <button class="btn btn-success btn-sm" onclick="window.print()"><i class="bi bi-printer"></i> Cetak</button>
+        </div>
       </div>
-      ${html}
+      <div id="indukContainer">${html}</div>
     `;
+
+    const btn = document.getElementById('btnInDukPDF');
+    if (btn) btn.onclick = async () => {
+      if (typeof html2pdf === 'undefined') { U.toast('Library PDF belum siap','danger'); return; }
+      U.toast('Menyiapkan PDF...','info');
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'position:fixed;left:-99999px;top:0;background:#fff';
+      wrap.innerHTML = html;
+      document.body.appendChild(wrap);
+      const filename = muridIds.length === 1
+        ? `Buku_Induk_${(Store.findById('murid', muridIds[0])?.nama_lengkap||'').replace(/\s+/g,'_')}.pdf`
+        : `Buku_Induk_Massal.pdf`;
+      try {
+        await html2pdf().set({
+          margin: 0, filename,
+          image: { type:'jpeg', quality:0.95 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit:'mm', format:'a4', orientation:'portrait' },
+          pagebreak: { mode: ['css','legacy'] }
+        }).from(wrap).save();
+        U.toast('PDF berhasil didownload');
+      } catch (e) { U.toast('Gagal: '+e.message,'danger'); }
+      finally { wrap.remove(); }
+    };
   }
 
   function indukHTML(muridId) {
