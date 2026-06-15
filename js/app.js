@@ -12,6 +12,7 @@ window.App = (function() {
     { path:'generate', icon:'bi-magic', label:'Generate Deskripsi', render:()=>Pages.generate.render(), roles:['admin','kepala','guru'] },
     { path:'rapor', icon:'bi-file-text', label:'Rapor RA', render:()=>Pages.rapor.render(), roles:['admin','kepala','guru'] },
     { path:'cetak', icon:'bi-printer', label:'Cetak & Export', render:()=>Pages.cetak.render(), roles:['admin','kepala','guru','operator'] },
+    { path:'cetak-induk', icon:'bi-journal-text', label:'Cetak Buku Induk', render:(ctx)=>Pages.cetak_induk.render(ctx), roles:['admin','kepala','guru','operator'], hidden:true },
     { path:'rekap', icon:'bi-bar-chart', label:'Rekap Perkembangan', render:()=>Pages.rekap.render(), roles:['admin','kepala','guru'] },
     { path:'pengguna', icon:'bi-people', label:'Pengaturan Pengguna', render:()=>Pages.pengguna.render(), roles:['admin'] },
     { path:'backup', icon:'bi-cloud-arrow-down', label:'Backup Data', render:()=>Pages.backup.render(), roles:['admin'] }
@@ -76,7 +77,7 @@ window.App = (function() {
 
   function renderNav(user) {
     const ul = document.getElementById('navList');
-    const items = ROUTES.filter(r => !r.roles || r.roles.includes(user.role));
+    const items = ROUTES.filter(r => (!r.roles || r.roles.includes(user.role)) && !r.hidden);
     ul.innerHTML = items.map(r =>
       `<li><a href="#/${r.path}" data-path="${r.path}"><i class="bi ${r.icon}"></i> ${U.esc(r.label)}</a></li>`
     ).join('');

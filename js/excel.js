@@ -57,7 +57,8 @@ window.XLS = (function() {
     { key:'ta_masuk', header:'TA Masuk', width:12 },
     { key:'status', header:'Status (Aktif/Pindah/Lulus)', width:12 },
     { key:'no_ijazah', header:'No Ijazah', width:14 },
-    { key:'no_akta', header:'No Akta Kelahiran', width:18 }
+    { key:'no_akta', header:'No Akta Kelahiran', width:18 },
+    { key:'catatan_khusus', header:'Catatan Khusus', width:30 }
   ];
 
   async function exportBukuInduk(filename='Buku_Induk_RA.xlsx') {

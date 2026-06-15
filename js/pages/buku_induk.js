@@ -36,6 +36,7 @@ window.Pages.buku_induk = (function() {
           <button class="btn btn-outline-success btn-sm" id="btnTemplate"><i class="bi bi-download"></i> Template</button>
           <button class="btn btn-outline-success btn-sm" id="btnImport"><i class="bi bi-upload"></i> Import Excel</button>
           <button class="btn btn-outline-success btn-sm" id="btnExport"><i class="bi bi-file-earmark-excel"></i> Export Excel</button>
+          <button class="btn btn-outline-success btn-sm" id="btnPrintAll"><i class="bi bi-printer"></i> Cetak Buku Induk</button>
           ${user.role !== 'kepala' ? `<button class="btn btn-success btn-sm" id="btnAdd"><i class="bi bi-plus"></i> Tambah Murid</button>` : ''}
         </div>
       </div>
@@ -68,6 +69,7 @@ window.Pages.buku_induk = (function() {
                 <td><span class="bdg ${m.status==='Aktif'?'bdg-bsb':'bdg-mb'}">${U.esc(m.status||'Aktif')}</span></td>
                 <td class="actions">
                   <button class="btn btn-sm btn-outline-success" data-act="edit" data-id="${m.id}" title="Edit"><i class="bi bi-pencil"></i></button>
+                  <a class="btn btn-sm btn-outline-success" href="#/cetak-induk/${m.id}" title="Cetak Buku Induk"><i class="bi bi-printer"></i></a>
                   <a class="btn btn-sm btn-outline-success" href="#/cetak/${m.id}" title="Rapor"><i class="bi bi-file-text"></i></a>
                   ${user.role!=='kepala'?`<button class="btn btn-sm btn-outline-danger" data-act="del" data-id="${m.id}" title="Hapus"><i class="bi bi-trash"></i></button>`:''}
                 </td>
@@ -83,6 +85,13 @@ window.Pages.buku_induk = (function() {
     document.getElementById('btnTemplate').onclick = () => XLS.downloadTemplateBukuInduk();
     document.getElementById('btnExport').onclick = () => XLS.exportBukuInduk();
     document.getElementById('btnImport').onclick = () => doImport();
+    document.getElementById('btnPrintAll').onclick = () => {
+      // print semua yang sedang difilter
+      const ids = murid.map(m => m.id);
+      if (!ids.length) { U.toast('Tidak ada murid untuk dicetak','warning'); return; }
+      sessionStorage.setItem('ra_print_induk_ids', JSON.stringify(ids));
+      location.hash = '#/cetak-induk/batch';
+    };
     const btnAdd = document.getElementById('btnAdd');
     if (btnAdd) btnAdd.onclick = () => editForm(null);
 
@@ -248,6 +257,7 @@ window.Pages.buku_induk = (function() {
               <div class="col-md-6"><label class="form-label small">Foto Anak</label>
                 ${m0.foto_dataurl?`<div class="mb-2"><img src="${m0.foto_dataurl}" style="max-height:80px;border:1px solid #ccc"></div>`:''}
                 <input type="file" class="form-control" id="bi_foto" accept="image/*"></div>
+              ${field('catatan_khusus','Catatan Khusus',m0.catatan_khusus,{type:'textarea',cols:12})}
             </div>
           </div>
           <div class="tab-pane fade" id="tab-klr">
@@ -266,7 +276,7 @@ window.Pages.buku_induk = (function() {
     });
 
     m.el.querySelector('#btnSaveBI').onclick = async () => {
-      const fields = ['kelas_id','no_induk','nisn','nik','nama_lengkap','nama_panggilan','jenis_kelamin','tempat_lahir','tanggal_lahir','agama','kewarganegaraan','anak_ke','jumlah_saudara','bahasa_sehari','alamat','rt_rw','desa','kec','kab','prov','kode_pos','jarak_rumah','transportasi','tinggal_bersama','tinggi','berat','lingkar_kepala','gol_darah','riwayat_penyakit','alergi','imunisasi','catatan_kesehatan','ayah_nama','ayah_nik','ayah_ttl','ayah_pendidikan','ayah_pekerjaan','ayah_penghasilan','ayah_hp','ibu_nama','ibu_nik','ibu_ttl','ibu_pendidikan','ibu_pekerjaan','ibu_penghasilan','ibu_hp','wali_nama','wali_hubungan','wali_hp','wali_alamat','tanggal_masuk','asal_paud','kelompok_masuk','ta_masuk','status','no_ijazah','no_akta','tanggal_keluar','alasan_keluar','melanjutkan_ke','no_surat_pindah','keterangan_keluar'];
+      const fields = ['kelas_id','no_induk','nisn','nik','nama_lengkap','nama_panggilan','jenis_kelamin','tempat_lahir','tanggal_lahir','agama','kewarganegaraan','anak_ke','jumlah_saudara','bahasa_sehari','alamat','rt_rw','desa','kec','kab','prov','kode_pos','jarak_rumah','transportasi','tinggal_bersama','tinggi','berat','lingkar_kepala','gol_darah','riwayat_penyakit','alergi','imunisasi','catatan_kesehatan','ayah_nama','ayah_nik','ayah_ttl','ayah_pendidikan','ayah_pekerjaan','ayah_penghasilan','ayah_hp','ibu_nama','ibu_nik','ibu_ttl','ibu_pendidikan','ibu_pekerjaan','ibu_penghasilan','ibu_hp','wali_nama','wali_hubungan','wali_hp','wali_alamat','tanggal_masuk','asal_paud','kelompok_masuk','ta_masuk','status','no_ijazah','no_akta','tanggal_keluar','alasan_keluar','melanjutkan_ke','no_surat_pindah','keterangan_keluar','catatan_khusus'];
       const obj = {};
       fields.forEach(k => {
         const el = m.el.querySelector('#bi_'+k);
