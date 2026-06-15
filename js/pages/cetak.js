@@ -137,9 +137,6 @@ window.Pages.cetak = (function() {
     root.innerHTML = `
       <div class="d-flex justify-content-between align-items-center mb-3 no-print flex-wrap gap-2">
         <div>
-    root.innerHTML = `
-      <div class="d-flex justify-content-between align-items-center mb-3 no-print flex-wrap gap-2">
-        <div>
           <a href="#/cetak" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Kembali</a>
           <a href="#/rapor" class="btn btn-sm btn-outline-success"><i class="bi bi-pencil"></i> Edit Rapor</a>
         </div>
