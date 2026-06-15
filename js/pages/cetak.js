@@ -140,16 +140,34 @@ window.Pages.cetak = (function() {
           <a href="#/cetak" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Kembali</a>
           <a href="#/rapor" class="btn btn-sm btn-outline-success"><i class="bi bi-pencil"></i> Edit Rapor</a>
         </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="small text-muted">Orientasi:</span>
+          <div class="btn-group" role="group">
+            <input type="radio" class="btn-check" name="raporOri" id="raporOriP" value="portrait" checked>
+            <label class="btn btn-sm btn-outline-secondary" for="raporOriP"><i class="bi bi-file-text"></i> Portrait</label>
+            <input type="radio" class="btn-check" name="raporOri" id="raporOriL" value="landscape">
+            <label class="btn btn-sm btn-outline-secondary" for="raporOriL"><i class="bi bi-file-earmark-image"></i> Landscape</label>
+          </div>
+        </div>
         <div class="small text-muted">${muridIds.length} rapor siap cetak</div>
         <div class="d-flex gap-2">
           <button class="btn btn-outline-success btn-sm" id="btnDownloadPDF"><i class="bi bi-file-earmark-pdf"></i> Download PDF</button>
           <button class="btn btn-success btn-sm" onclick="window.print()"><i class="bi bi-printer"></i> Cetak</button>
         </div>
       </div>
+      <style id="oriStyle">@page { size: A4 portrait; }</style>
       <div id="raporContainer">${html}</div>
     `;
 
-    document.getElementById('btnDownloadPDF').onclick = () => downloadPDF(muridIds, { kelasId: opts.kelasId, filename });
+    const oriStyle = document.getElementById('oriStyle');
+    document.querySelectorAll('input[name="raporOri"]').forEach(r => {
+      r.onchange = () => { oriStyle.textContent = `@page { size: A4 ${r.value}; }`; };
+    });
+
+    document.getElementById('btnDownloadPDF').onclick = () => {
+      const ori = document.querySelector('input[name="raporOri"]:checked')?.value || 'portrait';
+      downloadPDF(muridIds, { kelasId: opts.kelasId, filename, orientation: ori });
+    };
   }
 
   // Generate PDF dengan html2pdf
@@ -196,7 +214,7 @@ window.Pages.cetak = (function() {
           windowWidth: 794,
           backgroundColor: '#ffffff'
         },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: opts.orientation || 'portrait' },
         pagebreak: { mode: ['css', 'legacy'], before: '.html2pdf__page-break' }
       }).from(wrap).save();
       U.toast('PDF berhasil didownload');

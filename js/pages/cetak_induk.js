@@ -23,14 +23,29 @@ window.Pages.cetak_induk = (function() {
     root.innerHTML = `
       <div class="d-flex justify-content-between align-items-center mb-3 no-print flex-wrap gap-2">
         <a href="#/buku-induk" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Kembali</a>
+        <div class="d-flex align-items-center gap-2">
+          <span class="small text-muted">Orientasi:</span>
+          <div class="btn-group" role="group">
+            <input type="radio" class="btn-check" name="indukOri" id="indukOriP" value="portrait" checked>
+            <label class="btn btn-sm btn-outline-secondary" for="indukOriP"><i class="bi bi-file-text"></i> Portrait</label>
+            <input type="radio" class="btn-check" name="indukOri" id="indukOriL" value="landscape">
+            <label class="btn btn-sm btn-outline-secondary" for="indukOriL"><i class="bi bi-file-earmark-image"></i> Landscape</label>
+          </div>
+        </div>
         <div class="text-muted small">${muridIds.length} buku induk siap cetak</div>
         <div class="d-flex gap-2">
           <button class="btn btn-outline-success btn-sm" id="btnInDukPDF"><i class="bi bi-file-earmark-pdf"></i> Download PDF</button>
           <button class="btn btn-success btn-sm" onclick="window.print()"><i class="bi bi-printer"></i> Cetak</button>
         </div>
       </div>
+      <style id="indukOriStyle">@page { size: A4 portrait; }</style>
       <div id="indukContainer">${html}</div>
     `;
+
+    const indukOriStyle = document.getElementById('indukOriStyle');
+    document.querySelectorAll('input[name="indukOri"]').forEach(r => {
+      r.onchange = () => { indukOriStyle.textContent = `@page { size: A4 ${r.value}; }`; };
+    });
 
     const btn = document.getElementById('btnInDukPDF');
     if (btn) btn.onclick = async () => {
@@ -57,7 +72,7 @@ window.Pages.cetak_induk = (function() {
           margin: [10, 10, 10, 10], filename,
           image: { type:'jpeg', quality:0.95 },
           html2canvas: { scale: 2, useCORS: true, windowWidth: 794, backgroundColor:'#ffffff' },
-          jsPDF: { unit:'mm', format:'a4', orientation:'portrait' },
+          jsPDF: { unit:'mm', format:'a4', orientation: (document.querySelector('input[name="indukOri"]:checked')?.value || 'portrait') },
           pagebreak: { mode: ['css','legacy'], before: '.html2pdf__page-break' }
         }).from(wrap).save();
         U.toast('PDF berhasil didownload');

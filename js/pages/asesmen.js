@@ -363,12 +363,101 @@ window.Pages.asesmen = (function() {
     });
     if (!ases.length) html = '<div class="empty">Belum ada asesmen tersimpan untuk anak ini di TA/Semester yang dipilih.</div>';
 
+    const ta = Store.findById('tahun_ajaran', taId);
+    const sem = Store.findById('semester', semId);
+    const periodeLabel = `TA ${ta?.label||'-'} \u00b7 Semester ${sem?.label||'-'}`;
+
     U.showModal({
       size:'xl',
       title: `Detail Asesmen: ${m.nama_lengkap}`,
       bodyHTML: html,
-      footerHTML: `<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>`
+      footerHTML: `
+        <button type="button" class="btn btn-outline-success" id="btnCetakDetail"><i class="bi bi-printer"></i> Cetak</button>
+        <div class="btn-group ms-2" role="group">
+          <input type="radio" class="btn-check" name="detailOri" id="oriPort" value="portrait" checked>
+          <label class="btn btn-sm btn-outline-secondary" for="oriPort"><i class="bi bi-file-text"></i> Portrait</label>
+          <input type="radio" class="btn-check" name="detailOri" id="oriLand" value="landscape">
+          <label class="btn btn-sm btn-outline-secondary" for="oriLand"><i class="bi bi-file-earmark-image"></i> Landscape</label>
+        </div>
+        <button type="button" class="btn btn-secondary ms-auto" data-bs-dismiss="modal">Tutup</button>`
     });
+
+    document.getElementById('btnCetakDetail').onclick = () => {
+      const ori = document.querySelector('input[name="detailOri"]:checked')?.value || 'portrait';
+      cetakDetailAsesmen(m, periodeLabel, html, ori);
+    };
+  }
+
+  function cetakDetailAsesmen(murid, periodeLabel, bodyHTML, orientation) {
+    const profil = Store.profilRA();
+    const w = window.open('', '_blank', 'width=1100,height=800');
+    if (!w) { U.toast('Pop-up diblokir browser','danger'); return; }
+    const css = `
+      @page { size: A4 ${orientation}; margin: 12mm; }
+      body { font-family: 'Times New Roman', serif; font-size: 11pt; color: #000; margin: 0; padding: 0; }
+      .kop { display:flex; gap:12px; align-items:center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 10px; }
+      .kop img { width: 60px; height: 60px; object-fit: contain; }
+      .kop .text { flex:1; text-align:center; }
+      .kop .text h2 { margin:0; font-size:16pt; }
+      .kop .text .yayasan { font-size:10pt; font-weight:600; }
+      .kop .text .alamat { font-size:9pt; }
+      .judul { text-align:center; font-weight:bold; font-size:13pt; text-transform:uppercase; margin: 6px 0 2px; }
+      .sub { text-align:center; font-size:10pt; margin-bottom:10px; }
+      .info { display:flex; gap:30px; margin: 8px 0 12px; font-size:10.5pt; }
+      .info .lbl { display:inline-block; min-width:90px; }
+      table.tbl { width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 9.5pt; }
+      table.tbl th, table.tbl td { border: 1px solid #000; padding: 4px 6px; vertical-align: top; }
+      table.tbl th { background: #e8f5e9; font-weight: 600; text-align:center; }
+      .form-section-title { font-weight:bold; font-size:11pt; margin: 10px 0 4px; padding: 4px 6px; background: #f0f0f0; border-left: 3px solid #2e7d32; }
+      .row { display:flex; gap:6px; margin-bottom: 8px; }
+      .col { flex:1; border: 1px solid #999; padding: 6px; text-align:center; }
+      .col .label { font-size:9pt; color:#555; }
+      .col .value { font-size:14pt; font-weight:bold; }
+      .empty { text-align:center; padding:20px; font-style:italic; color:#777; }
+      .bdg { display:inline-block; padding: 2px 6px; border-radius: 3px; font-size:9pt; font-weight:600; border: 1px solid #999; }
+      .bdg-bb { background:#ffebee; } .bdg-mb { background:#fff8e1; }
+      .bdg-bsh { background:#e3f2fd; } .bdg-bsb { background:#e8f5e9; }
+      .table-wrap { width: 100%; overflow: visible; }
+      img { max-width: 50px; max-height: 40px; }
+      .ttd { display:flex; justify-content: space-between; margin-top: 30px; font-size: 10.5pt; }
+      .ttd .col-ttd { width: 40%; text-align:center; }
+      .ttd .nama { margin-top: 60px; font-weight: 600; text-decoration: underline; }
+      @media print { .no-print { display:none !important; } }
+    `;
+    const kop = `
+      <div class="kop">
+        ${profil.logo_ra_dataurl ? `<img src="${profil.logo_ra_dataurl}">` : '<div style="width:60px;height:60px"></div>'}
+        <div class="text">
+          ${profil.nama_yayasan ? `<div class="yayasan">${U.esc(profil.nama_yayasan.toUpperCase())}</div>` : ''}
+          <h2>${U.esc(profil.nama || 'RAUDHATUL ATHFAL')}</h2>
+          <div class="alamat">${U.esc(profil.alamat||'')}, ${U.esc(profil.desa||'')}, ${U.esc(profil.kec||'')}, ${U.esc(profil.kab||'')}, ${U.esc(profil.prov||'')}</div>
+          <div class="alamat">NSM: ${U.esc(profil.nsm||'-')} &mdash; NPSN: ${U.esc(profil.npsn||'-')}</div>
+        </div>
+        <div style="width:60px;height:60px"></div>
+      </div>
+      <div class="judul">Detail Asesmen Perkembangan</div>
+      <div class="sub">${U.esc(periodeLabel)}</div>
+      <div class="info">
+        <div><span class="lbl">Nama</span>: <b>${U.esc(murid.nama_lengkap||'-')}</b></div>
+        <div><span class="lbl">NISN</span>: ${U.esc(murid.nisn||'-')}</div>
+        <div><span class="lbl">Jenis Kelamin</span>: ${U.esc(murid.jk||'-')}</div>
+      </div>
+    `;
+    const ttd = `
+      <div class="ttd">
+        <div class="col-ttd">
+          Mengetahui,<br>Kepala ${U.esc(profil.nama||'RA')}<br>
+          <div class="nama">${U.esc(profil.kepala_nama||'(.................)')}</div>
+          ${profil.kepala_nip ? `<div>NIP. ${U.esc(profil.kepala_nip)}</div>` : ''}
+        </div>
+        <div class="col-ttd">
+          ${U.esc(profil.kota_cetak||'')}, ${new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'})}<br>Guru Kelas<br>
+          <div class="nama">(.................)</div>
+        </div>
+      </div>
+    `;
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Detail Asesmen ${U.esc(murid.nama_lengkap)}</title><style>${css}</style></head><body>${kop}${bodyHTML}${ttd}<script>window.onload=function(){setTimeout(function(){window.print();},300);};</script></body></html>`);
+    w.document.close();
   }
 
   // Auto-fill catatan observasi & rekomendasi berdasarkan capaian + indikator
