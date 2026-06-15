@@ -214,12 +214,12 @@
   align-items: stretch;
 }
 .induk-foto-box {
-  width: 90px; min-height: 110px;
+  width: 30mm; min-height: 40mm;
   border: 1.5px solid #000;
   display: flex; align-items: center; justify-content: center;
   background: #fafafa; flex-shrink: 0;
 }
-.induk-foto-box img { width: 100%; height: 100%; object-fit: cover; }
+.induk-foto-box img { width: 100%; height: 40mm; object-fit: cover; }
 .induk-foto-placeholder {
   font-size: 9pt; text-align: center; color: #666; line-height: 1.3;
 }

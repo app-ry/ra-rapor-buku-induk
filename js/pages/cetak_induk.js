@@ -23,14 +23,29 @@ window.Pages.cetak_induk = (function() {
     root.innerHTML = `
       <div class="d-flex justify-content-between align-items-center mb-3 no-print flex-wrap gap-2">
         <a href="#/buku-induk" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Kembali</a>
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-zoom-out"></i>
+          <input type="range" id="iZoom" min="50" max="150" step="5" value="100" style="width:120px">
+          <i class="bi bi-zoom-in"></i>
+          <span id="iZoomLbl" class="small fw-semibold" style="width:42px;text-align:right">100%</span>
+        </div>
         <div class="text-muted small">${muridIds.length} buku induk siap cetak</div>
         <div class="d-flex gap-2">
           <button class="btn btn-outline-success btn-sm" id="btnInDukPDF"><i class="bi bi-file-earmark-pdf"></i> Download PDF</button>
           <button class="btn btn-success btn-sm" onclick="window.print()"><i class="bi bi-printer"></i> Cetak</button>
         </div>
       </div>
-      <div id="indukContainer">${html}</div>
+      <div id="indukContainer" class="rapor-zoom-wrap">${html}</div>
     `;
+
+    const izr = document.getElementById('iZoom');
+    const izl = document.getElementById('iZoomLbl');
+    const iwrap = document.getElementById('indukContainer');
+    if (izr) izr.oninput = () => {
+      const v = parseInt(izr.value, 10); izl.textContent = v+'%';
+      iwrap.style.transform = `scale(${v/100})`;
+      iwrap.style.transformOrigin = 'top center';
+    };
 
     const btn = document.getElementById('btnInDukPDF');
     if (btn) btn.onclick = async () => {
