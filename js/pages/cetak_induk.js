@@ -23,28 +23,14 @@ window.Pages.cetak_induk = (function() {
     root.innerHTML = `
       <div class="d-flex justify-content-between align-items-center mb-3 no-print flex-wrap gap-2">
         <a href="#/buku-induk" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Kembali</a>
-        <div class="d-flex align-items-center gap-2">
-          <i class="bi bi-zoom-out"></i>
-          <input type="range" id="iZoom" min="50" max="150" step="5" value="100" style="width:120px">
-          <i class="bi bi-zoom-in"></i>
-          <span id="iZoomLbl" class="small fw-semibold" style="width:42px;text-align:right">100%</span>
-        </div>
         <div class="text-muted small">${muridIds.length} buku induk siap cetak</div>
         <div class="d-flex gap-2">
           <button class="btn btn-outline-success btn-sm" id="btnInDukPDF"><i class="bi bi-file-earmark-pdf"></i> Download PDF</button>
           <button class="btn btn-success btn-sm" onclick="window.print()"><i class="bi bi-printer"></i> Cetak</button>
         </div>
       </div>
-      <div id="indukContainer" class="rapor-zoom-wrap">${html}</div>
+      <div id="indukContainer">${html}</div>
     `;
-
-    const izr = document.getElementById('iZoom');
-    const izl = document.getElementById('iZoomLbl');
-    const iwrap = document.getElementById('indukContainer');
-    if (izr) izr.oninput = () => {
-      const v = parseInt(izr.value, 10); izl.textContent = v+'%';
-      iwrap.style.zoom = (v / 100).toString();
-    };
 
     const btn = document.getElementById('btnInDukPDF');
     if (btn) btn.onclick = async () => {
@@ -54,8 +40,6 @@ window.Pages.cetak_induk = (function() {
       wrap.style.cssText = 'position:absolute;left:0;top:0;width:210mm;background:#fff;opacity:0;pointer-events:none;z-index:-9999';
       wrap.innerHTML = html;
       document.body.appendChild(wrap);
-      const z = parseInt(izr?.value || '100', 10) / 100;
-      if (z !== 1) wrap.style.zoom = z.toString();
       wrap.querySelectorAll('.induk-page').forEach((el, i) => {
         if (i > 0) el.classList.add('html2pdf__page-break');
       });

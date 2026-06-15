@@ -137,14 +137,11 @@ window.Pages.cetak = (function() {
     root.innerHTML = `
       <div class="d-flex justify-content-between align-items-center mb-3 no-print flex-wrap gap-2">
         <div>
+    root.innerHTML = `
+      <div class="d-flex justify-content-between align-items-center mb-3 no-print flex-wrap gap-2">
+        <div>
           <a href="#/cetak" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Kembali</a>
           <a href="#/rapor" class="btn btn-sm btn-outline-success"><i class="bi bi-pencil"></i> Edit Rapor</a>
-        </div>
-        <div class="d-flex align-items-center gap-2">
-          <i class="bi bi-zoom-out"></i>
-          <input type="range" id="zoomRange" min="50" max="150" step="5" value="100" style="width:120px">
-          <i class="bi bi-zoom-in"></i>
-          <span id="zoomLabel" class="small fw-semibold" style="width:42px;text-align:right">100%</span>
         </div>
         <div class="small text-muted">${muridIds.length} rapor siap cetak</div>
         <div class="d-flex gap-2">
@@ -152,20 +149,10 @@ window.Pages.cetak = (function() {
           <button class="btn btn-success btn-sm" onclick="window.print()"><i class="bi bi-printer"></i> Cetak</button>
         </div>
       </div>
-      <div id="raporContainer" class="rapor-zoom-wrap">${html}</div>
+      <div id="raporContainer">${html}</div>
     `;
 
-    const zoomRange = document.getElementById('zoomRange');
-    const zoomLabel = document.getElementById('zoomLabel');
-    const wrap = document.getElementById('raporContainer');
-    zoomRange.oninput = () => {
-      const v = parseInt(zoomRange.value, 10);
-      zoomLabel.textContent = v + '%';
-      wrap.style.transform = `scale(${v/100})`;
-      wrap.style.transformOrigin = 'top center';
-    };
-
-    document.getElementById('btnDownloadPDF').onclick = () => downloadPDF(muridIds, { kelasId: opts.kelasId, prebuiltContainer: 'raporContainer', filename });
+    document.getElementById('btnDownloadPDF').onclick = () => downloadPDF(muridIds, { kelasId: opts.kelasId, filename });
   }
 
   // Generate PDF dengan html2pdf
@@ -182,7 +169,6 @@ window.Pages.cetak = (function() {
     wrap.style.cssText = 'position:absolute;left:0;top:0;width:210mm;background:#fff;opacity:0;pointer-events:none;z-index:-9999';
     wrap.innerHTML = muridIds.map(id => raporHTML(id, ta?.id, sem?.id)).join('');
     document.body.appendChild(wrap);
-    if (opts.zoom && opts.zoom !== 1) wrap.style.zoom = opts.zoom.toString();
 
     // Tambah pagebreak class manual untuk html2pdf
     wrap.querySelectorAll('.rapor-page').forEach((el, i) => {
