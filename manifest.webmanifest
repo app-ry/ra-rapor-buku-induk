@@ -1,0 +1,15 @@
+{
+  "name": "Aplikasi Rapor & Buku Induk RA Digital",
+  "short_name": "Rapor RA",
+  "description": "Aplikasi rapor dan buku induk Raudhatul Athfal sesuai KMA 1503 Tahun 2025",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#2e7d32",
+  "lang": "id",
+  "icons": [
+    { "src": "icons/kemenag.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5" />
+<meta name="theme-color" content="#2e7d32" />
+<title>Aplikasi Rapor & Buku Induk RA Digital</title>
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" type="image/svg+xml" href="icons/kemenag.svg" />
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+<link href="css/app.css" rel="stylesheet" />
+<link href="css/print.css" rel="stylesheet" media="print" />
+</head>
+<body>
+
+<!-- Login Screen -->
+<div id="loginScreen" class="login-screen d-none">
+  <div class="login-card">
+    <div class="text-center mb-4">
+      <img src="icons/kemenag.svg" alt="Kemenag" width="64" height="64" class="mb-3" />
+      <h4 class="fw-bold mb-1">Rapor & Buku Induk RA</h4>
+      <div class="text-muted small">Raudhatul Athfal — Fase Fondasi</div>
+    </div>
+    <form id="loginForm">
+      <div class="mb-3">
+        <label class="form-label">Username</label>
+        <input type="text" class="form-control" id="loginUsername" required autocomplete="username" />
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Password</label>
+        <input type="password" class="form-control" id="loginPassword" required autocomplete="current-password" />
+      </div>
+      <button class="btn btn-success w-100 fw-semibold" type="submit">Masuk</button>
+    </form>
+    <div class="login-hint mt-3">
+      <div class="small text-muted mb-1">Demo akun:</div>
+      <div class="small"><b>admin</b> / admin123 — semua akses</div>
+      <div class="small"><b>kepala</b> / kepala123 — Kepala RA</div>
+      <div class="small"><b>guru</b> / guru123 — Guru Kelas</div>
+      <div class="small"><b>operator</b> / operator123 — Operator</div>
+    </div>
+  </div>
+</div>
+
+<!-- Main App Shell -->
+<div id="appShell" class="d-none">
+  <nav class="topbar d-md-none">
+    <button class="btn btn-sm btn-light" id="btnSidebarToggle"><i class="bi bi-list"></i></button>
+    <div class="topbar-title">Rapor RA</div>
+    <button class="btn btn-sm btn-light" id="btnLogoutMobile"><i class="bi bi-box-arrow-right"></i></button>
+  </nav>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-brand">
+      <img src="icons/kemenag.svg" alt="" width="32" height="32" />
+      <div>
+        <div class="brand-title">Rapor RA</div>
+        <div class="brand-sub" id="sidebarRaName">RA Demo</div>
+      </div>
+    </div>
+    <div class="user-pill" id="userPill">—</div>
+    <ul class="nav-list" id="navList"></ul>
+    <button class="btn btn-outline-light btn-sm w-100 mt-3" id="btnLogout"><i class="bi bi-box-arrow-right"></i> Keluar</button>
+    <div class="sidebar-footer">v1.0.0 · 2026</div>
+  </aside>
+
+  <main id="main" class="main-content">
+    <div id="pageRoot"></div>
+  </main>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:1080" id="toastContainer"></div>
+
+<!-- Modal container -->
+<div id="modalRoot"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- App scripts (load order matters) -->
+<script src="js/lib/utils.js"></script>
+<script src="js/store.js"></script>
+<script src="js/seed.js"></script>
+<script src="js/narasi.js"></script>
+<script src="js/excel.js"></script>
+<script src="js/pages/dashboard.js"></script>
+<script src="js/pages/profil.js"></script>
+<script src="js/pages/tahun_ajaran.js"></script>
+<script src="js/pages/guru.js"></script>
+<script src="js/pages/kelas.js"></script>
+<script src="js/pages/buku_induk.js"></script>
+<script src="js/pages/indikator.js"></script>
+<script src="js/pages/asesmen.js"></script>
+<script src="js/pages/generate.js"></script>
+<script src="js/pages/rapor.js"></script>
+<script src="js/pages/cetak.js"></script>
+<script src="js/pages/rekap.js"></script>
+<script src="js/pages/pengguna.js"></script>
+<script src="js/pages/backup.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

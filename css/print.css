@@ -1,0 +1,77 @@
+@page { size: A4 portrait; margin: 12mm; }
+
+@media print {
+  body { background: #fff !important; }
+  #loginScreen, .topbar, .sidebar, #toastContainer, .no-print, .btn { display: none !important; }
+  .main-content { margin-left: 0 !important; padding: 0 !important; }
+  .panel { box-shadow: none !important; padding: 0 !important; margin: 0 !important; }
+  .rapor-page { page-break-after: always; }
+  .rapor-page:last-child { page-break-after: auto; }
+}
+
+.rapor-page {
+  background: #fff; color: #000;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 11pt;
+  line-height: 1.45;
+  max-width: 210mm;
+  margin: 0 auto 20px;
+  padding: 18mm 16mm;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+}
+
+.rapor-page .rapor-header {
+  display: flex; align-items: center; gap: 16px;
+  border-bottom: 3px double #000;
+  padding-bottom: 10px; margin-bottom: 16px;
+}
+.rapor-page .rapor-header img { width: 60px; height: 60px; object-fit: contain; }
+.rapor-page .rapor-header .text { flex: 1; text-align: center; }
+.rapor-page .rapor-header h2 { margin: 0; font-size: 14pt; font-weight: 700; }
+.rapor-page .rapor-header .alamat { font-size: 10pt; }
+
+.rapor-title {
+  text-align: center; font-weight: 700;
+  font-size: 13pt; text-transform: uppercase;
+  letter-spacing: 1px; margin: 12px 0 16px;
+}
+
+.rapor-id-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
+.rapor-id-table td { padding: 4px 6px; font-size: 11pt; vertical-align: top; }
+.rapor-id-table td.lbl { width: 30%; }
+.rapor-id-table td.sep { width: 2%; text-align: center; }
+
+.elemen-block { margin-bottom: 16px; page-break-inside: avoid; }
+.elemen-head {
+  background: #2e7d32; color: #fff;
+  padding: 6px 12px; font-weight: 700;
+  font-size: 11pt; letter-spacing: 0.3px;
+}
+.elemen-body {
+  border: 1.5px solid #2e7d32; padding: 10px 12px;
+  text-align: justify;
+}
+.elemen-body p { margin: 0 0 8px; }
+.elemen-body p:last-child { margin: 0; }
+
+.kehadiran-table {
+  width: 60%; border-collapse: collapse; margin: 12px 0;
+}
+.kehadiran-table th, .kehadiran-table td {
+  border: 1px solid #000; padding: 6px 10px; text-align: center;
+}
+.kehadiran-table th { background: #e8f5e9; }
+
+.ttd-grid {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;
+  margin-top: 30px; text-align: center;
+}
+.ttd-grid .col-ttd { font-size: 11pt; }
+.ttd-grid .col-ttd .role { margin-bottom: 60px; }
+.ttd-grid .col-ttd .nama { border-top: 1px solid #000; padding-top: 4px; font-weight: 700; }
+.ttd-tempat { text-align: right; margin-top: 16px; }
+
+.refleksi-block { border: 1px solid #999; padding: 10px 12px; margin-bottom: 10px; }
+.refleksi-block .q { font-weight: 600; margin-bottom: 4px; }
+
+.info-block { border: 1px solid #999; padding: 10px 12px; }
