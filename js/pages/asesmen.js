@@ -475,7 +475,6 @@ window.Pages.asesmen = (function() {
     }, 400);
     U.toast('Membuka dialog cetak...');
   }
-  }
 
   // Auto-fill catatan observasi & rekomendasi berdasarkan capaian + indikator
   function generateCatatan(ind, cap) {
