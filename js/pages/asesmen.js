@@ -211,8 +211,11 @@ window.Pages.asesmen = (function() {
         </div>
 
         <div class="mb-3">
-          <label class="form-label">Catatan Observasi</label>
-          <textarea class="form-control" id="dCat" rows="3" placeholder="Tuliskan apa yang diamati guru terkait indikator ini...">${U.esc(a.catatan||'')}</textarea>
+          <div class="d-flex justify-content-between align-items-center">
+            <label class="form-label mb-0">Catatan Observasi</label>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="dIsiOtomatis" title="Isi otomatis berdasarkan capaian & indikator"><i class="bi bi-magic"></i> Isi Otomatis</button>
+          </div>
+          <textarea class="form-control mt-1" id="dCat" rows="3" placeholder="Tuliskan apa yang diamati guru terkait indikator ini...">${U.esc(a.catatan||'')}</textarea>
         </div>
 
         <div class="mb-3">
@@ -239,6 +242,36 @@ window.Pages.asesmen = (function() {
 
     let buktiBaru = null;
     let hapusBukti = false;
+
+    // Auto-fill saat capaian berubah (kalau textarea masih kosong)
+    const dCat = m.el.querySelector('#dCat');
+    const dRek = m.el.querySelector('#dRek');
+    const radios = m.el.querySelectorAll('input[name="dCap"]');
+    radios.forEach(r => r.onchange = () => {
+      const cap = r.value;
+      // Update visual highlight
+      radios.forEach(x => {
+        const span = x.parentElement.querySelector('span');
+        if (!span) return;
+        if (x.checked) {
+          const colorMap = { BB:'#c62828', MB:'#f57f17', BSH:'#1565c0', BSB:'#2e7d32' };
+          span.style.background = colorMap[x.value]; span.style.color = '#fff';
+        } else {
+          span.style.background = '#f5f5f5'; span.style.color = '#333';
+        }
+      });
+      if (!dCat.value.trim()) dCat.value = generateCatatan(ind, cap);
+      if (!dRek.value.trim()) dRek.value = generateRekomendasi(ind, cap);
+    });
+
+    // Tombol isi ulang manual (override isi yang ada)
+    m.el.querySelector('#dIsiOtomatis').onclick = () => {
+      const cap = m.el.querySelector('input[name="dCap"]:checked')?.value;
+      if (!cap) { U.toast('Pilih capaian dulu','warning'); return; }
+      dCat.value = generateCatatan(ind, cap);
+      dRek.value = generateRekomendasi(ind, cap);
+      U.toast('Catatan & rekomendasi terisi otomatis');
+    };
     const inputFile = m.el.querySelector('#dBukti');
     inputFile.onchange = async () => {
       const f = inputFile.files[0];
@@ -336,6 +369,69 @@ window.Pages.asesmen = (function() {
       bodyHTML: html,
       footerHTML: `<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>`
     });
+  }
+
+  // Auto-fill catatan observasi & rekomendasi berdasarkan capaian + indikator
+  function generateCatatan(ind, cap) {
+    const teks = (ind?.teks || '').toLowerCase();
+    const elemen = ind?.elemen || '';
+    // Snippet pendek nama aktivitas dari teks indikator
+    const aktivitas = teks.length > 70 ? teks.slice(0, 70).split(' ').slice(0, -1).join(' ') + '...' : teks;
+
+    const tmpl = {
+      BSB: [
+        `Ananda menunjukkan kemampuan yang konsisten dan mandiri terkait "${aktivitas}". Ananda mampu melakukannya tanpa arahan guru dan kerap menjadi contoh bagi teman-teman.`,
+        `Ananda secara konsisten menampilkan capaian terkait "${aktivitas}". Ananda melakukannya dengan percaya diri, runtut, dan tuntas.`,
+        `Ananda terlihat sangat berkembang dalam hal "${aktivitas}". Ananda mengerjakannya dengan inisiatif sendiri dan hasil yang baik.`
+      ],
+      BSH: [
+        `Ananda sudah mampu melakukan "${aktivitas}" sesuai harapan. Ananda menyelesaikan kegiatan dengan baik dengan sedikit panduan guru.`,
+        `Ananda menunjukkan kemajuan yang baik terkait "${aktivitas}". Capaian Ananda sudah sesuai dengan tahap perkembangannya.`,
+        `Ananda terlihat antusias dan mampu mengikuti kegiatan "${aktivitas}" dengan baik.`
+      ],
+      MB: [
+        `Ananda mulai menunjukkan kemampuan terkait "${aktivitas}". Ananda masih membutuhkan bimbingan guru untuk menyelesaikannya secara utuh.`,
+        `Ananda sedang dalam proses berkembang pada kegiatan "${aktivitas}". Dengan dukungan guru, Ananda dapat mengikuti tahap demi tahap.`,
+        `Ananda menunjukkan minat pada kegiatan "${aktivitas}" dan sedang belajar untuk lebih konsisten.`
+      ],
+      BB: [
+        `Ananda masih dalam tahap awal mengenal kegiatan "${aktivitas}". Ananda akan terus didampingi melalui pembiasaan dan stimulasi yang menyenangkan.`,
+        `Ananda baru memulai pengalaman terkait "${aktivitas}". Guru memberi pendampingan agar Ananda nyaman bereksplorasi.`,
+        `Ananda perlu pembiasaan tambahan untuk kegiatan "${aktivitas}". Pendampingan akan terus diberikan dengan pendekatan yang lembut.`
+      ]
+    };
+    const arr = tmpl[cap] || tmpl.BSH;
+    // Pilih template berdasarkan hash sederhana indikator id biar konsisten per indikator
+    const idx = (ind?.id || '').split('').reduce((s,c) => s + c.charCodeAt(0), 0) % arr.length;
+    const kalimat = arr[idx];
+    // Capitalize first letter of aktivitas spot kalau perlu — biar aman pakai sebagaimana adanya
+    return kalimat.charAt(0).toUpperCase() + kalimat.slice(1);
+  }
+
+  function generateRekomendasi(ind, cap) {
+    const teks = (ind?.teks || '').toLowerCase();
+    const aktivitas = teks.length > 60 ? teks.slice(0, 60).split(' ').slice(0, -1).join(' ') + '...' : teks;
+    const tmpl = {
+      BSB: [
+        `Pertahankan capaian Ananda. Berikan tantangan baru yang lebih variatif terkait "${aktivitas}" dan ajak Ananda membantu teman yang masih belajar.`,
+        `Lanjutkan stimulasi dengan kegiatan yang lebih kompleks. Ananda dapat dilibatkan sebagai role model dalam kegiatan kelompok.`
+      ],
+      BSH: [
+        `Lanjutkan stimulasi rutin terkait "${aktivitas}" dengan variasi kegiatan yang menarik agar capaian Ananda semakin konsisten.`,
+        `Kembangkan kegiatan serupa dengan tingkat kesulitan bertahap. Berikan apresiasi positif untuk memperkuat kemajuan Ananda.`
+      ],
+      MB: [
+        `Berikan pendampingan tambahan dan kegiatan pembiasaan terkait "${aktivitas}" baik di kelas maupun di rumah. Ajak orang tua melanjutkan stimulasi serupa.`,
+        `Lanjutkan dengan kegiatan bermain yang menyenangkan untuk memperkuat kemampuan Ananda. Berikan contoh konkret dan apresiasi setiap usaha.`
+      ],
+      BB: [
+        `Lakukan pembiasaan rutin dengan langkah sederhana. Libatkan orang tua untuk menstimulasi "${aktivitas}" di rumah dengan suasana yang nyaman.`,
+        `Berikan pengalaman bermain yang konkret dan berulang. Dampingi Ananda dengan sabar agar tumbuh rasa percaya diri.`
+      ]
+    };
+    const arr = tmpl[cap] || tmpl.BSH;
+    const idx = ((ind?.id || '').split('').reduce((s,c) => s + c.charCodeAt(0), 0) + 7) % arr.length;
+    return arr[idx];
   }
 
   return { render };
