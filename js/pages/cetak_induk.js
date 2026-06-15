@@ -250,5 +250,112 @@ window.Pages.cetak_induk = (function() {
     return html;
   }
 
+  function nilaiSiswaHTML(m, profil) {
+    const indikator = Store.list('indikator');
+    const indMap = {}; indikator.forEach(i => indMap[i.id] = i);
+    const ases = Store.list('asesmen').filter(a => a.murid_id === m.id);
+    const tas = Store.list('tahun_ajaran');
+    const sems = Store.list('semester');
+    const elemenLabel = Narasi.ELEMEN_LABEL;
+
+    const periode = {};
+    ases.forEach(a => {
+      const key = `${a.ta_id}__${a.sem_id}`;
+      if (!periode[key]) {
+        const ta = tas.find(t => t.id === a.ta_id);
+        const sem = sems.find(s => s.id === a.sem_id);
+        periode[key] = { ta_id:a.ta_id, sem_id:a.sem_id, label: `TA ${ta?.label||'-'} \u00b7 Semester ${sem?.label||'-'}`, items:[] };
+      }
+      periode[key].items.push(a);
+    });
+    const periodeArr = Object.values(periode);
+
+    let html = `
+    <article class="rapor-page induk-page" style="page-break-before:always">
+      <div class="rapor-header">
+        ${profil.logo_kemenag_dataurl ? `<img src="${profil.logo_kemenag_dataurl}" alt="">` : `<div style="width:60px;height:60px"></div>`}
+        <div class="text">
+          ${profil.nama_yayasan ? `<div style="font-size:10.5pt;font-weight:600">${U.esc(profil.nama_yayasan.toUpperCase())}</div>` : ''}
+          <h2>${U.esc(profil.nama || 'RAUDHATUL ATHFAL')}</h2>
+          <div class="alamat">${U.esc(profil.alamat||'')}, ${U.esc(profil.desa||'')}, ${U.esc(profil.kec||'')}, ${U.esc(profil.kab||'')}, ${U.esc(profil.prov||'')}</div>
+          <div class="alamat" style="font-size:9pt">NSM: ${U.esc(profil.nsm||'-')} \u2014 NPSN: ${U.esc(profil.npsn||'-')}</div>
+        </div>
+        ${profil.logo_ra_dataurl ? `<img src="${profil.logo_ra_dataurl}" alt="">` : `<div style="width:60px;height:60px"></div>`}
+      </div>
+
+      <div class="rapor-title">Nilai Siswa</div>
+      <div class="rapor-subtitle">Atas Nama: <b>${U.esc(m.nama_lengkap||'-')}</b> \u00b7 NISN: ${U.esc(m.nisn||'-')}</div>
+    `;
+
+    if (!periodeArr.length) {
+      html += `<div style="padding:14px;border:1px solid #999;text-align:center;margin-top:20px;font-style:italic">Belum ada data asesmen untuk siswa ini.</div></article>`;
+      return html;
+    }
+
+    periodeArr.forEach(p => {
+      const dist = { BB:0, MB:0, BSH:0, BSB:0 };
+      p.items.forEach(a => dist[a.capaian] = (dist[a.capaian]||0)+1);
+      const total = p.items.length || 1;
+      const skor = (dist.BSB*4 + dist.BSH*3 + dist.MB*2 + dist.BB*1) / total;
+
+      html += `<div class="induk-section">
+        <div class="induk-section-head">${U.esc(p.label)}</div>
+        <table class="induk-table">
+          <tr>
+            <td class="lbl">Total Asesmen</td><td>${total} indikator</td>
+            <td class="lbl">Distribusi</td><td>BB: ${dist.BB} \u00b7 MB: ${dist.MB} \u00b7 BSH: ${dist.BSH} \u00b7 BSB: ${dist.BSB}</td>
+          </tr>
+          <tr>
+            <td class="lbl">Skor Rata-rata</td><td><b>${skor.toFixed(2)} / 4.00</b></td>
+            <td class="lbl">Predikat</td><td>${predikat(skor)}</td>
+          </tr>
+        </table>
+      </div>`;
+
+      Object.keys(elemenLabel).forEach(el => {
+        const items = p.items
+          .map(a => ({ a, ind: indMap[a.indikator_id] }))
+          .filter(x => x.ind && x.ind.elemen === el);
+        if (!items.length) return;
+        html += `<div class="induk-section">
+          <div class="induk-section-head">${U.esc(elemenLabel[el])}</div>
+          <table class="induk-table">
+            <thead><tr><th style="width:80px">Kode</th><th>Indikator</th><th style="width:70px;text-align:center">Capaian</th></tr></thead>
+            <tbody>
+              ${items.map(({a, ind}) => `<tr>
+                <td><b>${U.esc(ind.kode||'-')}</b></td>
+                <td>${U.esc(ind.teks)}</td>
+                <td style="text-align:center"><b>${U.esc(a.capaian)}</b></td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>`;
+      });
+
+      const cat = p.items.filter(a => a.catatan);
+      if (cat.length) {
+        html += `<div class="induk-section">
+          <div class="induk-section-head">Catatan Observasi Guru</div>
+          <table class="induk-table">
+            <thead><tr><th style="width:80px">Kode</th><th>Catatan</th></tr></thead>
+            <tbody>
+              ${cat.map(a => `<tr><td><b>${U.esc(indMap[a.indikator_id]?.kode||'-')}</b></td><td>${U.esc(a.catatan)}</td></tr>`).join('')}
+            </tbody>
+          </table>
+        </div>`;
+      }
+    });
+
+    html += `</article>`;
+    return html;
+  }
+
+  function predikat(skor) {
+    if (skor >= 3.5) return 'BSB (Berkembang Sangat Baik)';
+    if (skor >= 2.5) return 'BSH (Berkembang Sesuai Harapan)';
+    if (skor >= 1.5) return 'MB (Mulai Berkembang)';
+    return 'BB (Belum Berkembang)';
+  }
+
   return { render };
 })();
