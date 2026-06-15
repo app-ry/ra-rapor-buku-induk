@@ -33,11 +33,6 @@ window.Pages.profil = (function() {
             ${profil.logo_ra_dataurl ? `<div class="mb-2"><img src="${profil.logo_ra_dataurl}" style="max-width:120px;max-height:80px;border:1px solid #ccc;padding:4px;border-radius:6px"></div>` : ''}
             <input type="file" class="form-control" id="logo_ra_file" accept="image/*">
           </div>
-          <div class="col-md-6">
-            <label class="form-label">Logo Kemenag</label>
-            ${profil.logo_kemenag_dataurl ? `<div class="mb-2"><img src="${profil.logo_kemenag_dataurl}" style="max-width:120px;max-height:80px;border:1px solid #ccc;padding:4px;border-radius:6px"></div>` : ''}
-            <input type="file" class="form-control" id="logo_kemenag_file" accept="image/*">
-          </div>
         </div>
         <div class="mt-3">
           <button class="btn btn-success" type="submit"><i class="bi bi-check-lg"></i> Simpan</button>
@@ -53,8 +48,6 @@ window.Pages.profil = (function() {
       });
       const fr = document.getElementById('logo_ra_file').files[0];
       if (fr) cur.logo_ra_dataurl = await U.fileToDataURL(fr);
-      const fk = document.getElementById('logo_kemenag_file').files[0];
-      if (fk) cur.logo_kemenag_dataurl = await U.fileToDataURL(fk);
       Store.setObj('profil_ra', cur);
       Store.log('update','profil_ra');
       U.toast('Profil RA disimpan');

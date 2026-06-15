@@ -37,22 +37,31 @@ window.Pages.cetak_induk = (function() {
       if (typeof html2pdf === 'undefined') { U.toast('Library PDF belum siap','danger'); return; }
       U.toast('Menyiapkan PDF...','info');
       const wrap = document.createElement('div');
-      wrap.style.cssText = 'position:fixed;left:-99999px;top:0;background:#fff';
+      wrap.style.cssText = 'position:absolute;left:0;top:0;width:210mm;background:#fff;opacity:0;pointer-events:none;z-index:-9999';
       wrap.innerHTML = html;
       document.body.appendChild(wrap);
+      wrap.querySelectorAll('.induk-page').forEach((el, i) => {
+        if (i > 0) el.classList.add('html2pdf__page-break');
+      });
       const filename = muridIds.length === 1
         ? `Buku_Induk_${(Store.findById('murid', muridIds[0])?.nama_lengkap||'').replace(/\s+/g,'_')}.pdf`
         : `Buku_Induk_Massal.pdf`;
       try {
+        await new Promise(r => setTimeout(r, 200));
+        const imgs = wrap.querySelectorAll('img');
+        await Promise.all(Array.from(imgs).map(img => {
+          if (img.complete) return Promise.resolve();
+          return new Promise(res => { img.onload = img.onerror = res; });
+        }));
         await html2pdf().set({
-          margin: 0, filename,
+          margin: [10, 10, 10, 10], filename,
           image: { type:'jpeg', quality:0.95 },
-          html2canvas: { scale: 2, useCORS: true },
+          html2canvas: { scale: 2, useCORS: true, windowWidth: 794, backgroundColor:'#ffffff' },
           jsPDF: { unit:'mm', format:'a4', orientation:'portrait' },
-          pagebreak: { mode: ['css','legacy'] }
+          pagebreak: { mode: ['css','legacy'], before: '.html2pdf__page-break' }
         }).from(wrap).save();
         U.toast('PDF berhasil didownload');
-      } catch (e) { U.toast('Gagal: '+e.message,'danger'); }
+      } catch (e) { console.error(e); U.toast('Gagal: '+e.message,'danger'); }
       finally { wrap.remove(); }
     };
   }

@@ -161,33 +161,50 @@ window.Pages.cetak = (function() {
     }
     U.toast('Menyiapkan PDF...', 'info');
 
-    const container = document.createElement('div');
-    container.style.position = 'fixed';
-    container.style.left = '-99999px';
-    container.style.top = '0';
-    container.style.background = '#fff';
-    container.innerHTML = muridIds.map(id => raporHTML(id, ta?.id, sem?.id)).join('');
-    document.body.appendChild(container);
+    // Build offscreen tapi tetap visible secara render (opacity 0)
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:absolute;left:0;top:0;width:210mm;background:#fff;opacity:0;pointer-events:none;z-index:-9999';
+    wrap.innerHTML = muridIds.map(id => raporHTML(id, ta?.id, sem?.id)).join('');
+    document.body.appendChild(wrap);
+
+    // Tambah pagebreak class manual untuk html2pdf
+    wrap.querySelectorAll('.rapor-page').forEach((el, i) => {
+      if (i > 0) el.classList.add('html2pdf__page-break');
+    });
 
     const filename = opts.filename || (opts.kelasId
       ? `Rapor_Kelas_${(Store.findById('kelas', opts.kelasId)?.nama||'').replace(/\s+/g,'_')}.pdf`
       : `Rapor_${(Store.findById('murid', muridIds[0])?.nama_lengkap||'').replace(/\s+/g,'_')}.pdf`);
 
     try {
+      // Tunggu DOM settle + image load
+      await new Promise(r => setTimeout(r, 200));
+      const imgs = wrap.querySelectorAll('img');
+      await Promise.all(Array.from(imgs).map(img => {
+        if (img.complete) return Promise.resolve();
+        return new Promise(res => { img.onload = img.onerror = res; });
+      }));
+
       await html2pdf().set({
-        margin: 0,
+        margin: [10, 10, 10, 10],
         filename,
         image: { type: 'jpeg', quality: 0.95 },
-        html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          letterRendering: true,
+          windowWidth: 794,
+          backgroundColor: '#ffffff'
+        },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['css', 'legacy'], avoid: '.elemen-block' }
-      }).from(container).save();
+        pagebreak: { mode: ['css', 'legacy'], before: '.html2pdf__page-break' }
+      }).from(wrap).save();
       U.toast('PDF berhasil didownload');
     } catch (e) {
       console.error(e);
       U.toast('Gagal membuat PDF: ' + e.message, 'danger');
     } finally {
-      container.remove();
+      wrap.remove();
     }
   }
 
