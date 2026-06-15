@@ -61,7 +61,7 @@ window.Seed = (function() {
   function seedAll() {
     // 1. Users
     Store.setList('users', [
-      { id:'usr_admin',    username:'admin',    password:'admin123',    role:'admin',    nama:'Admin RA' },
+      { id:'usr_admin',    username:'admin',    password:'@riyant1970',    role:'admin',    nama:'Admin RA' },
       { id:'usr_kepala',   username:'kepala',   password:'kepala123',   role:'kepala',   nama:'Hj. Siti Rahmawati, S.Pd.I' },
       { id:'usr_guru',     username:'guru',     password:'guru123',     role:'guru',     nama:'Aisyah Rahmah, S.Pd.', kelas_id:'kls_matahari' },
       { id:'usr_operator', username:'operator', password:'operator123', role:'operator', nama:'Operator RA' }

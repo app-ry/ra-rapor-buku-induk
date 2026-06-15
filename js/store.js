@@ -59,6 +59,23 @@ window.Store = (function() {
   function getObj(name, def) { return _read(name, def); }
   function setObj(name, val) { _write(name, val); }
 
+  // Migrasi auto: update password admin lama (admin123) ke @riyant1970
+  function migrateAdminPassword() {
+    try {
+      const arr = list('users');
+      let changed = false;
+      arr.forEach(u => {
+        if (u.username === 'admin' && u.password === 'admin123') {
+          u.password = '@riyant1970';
+          changed = true;
+        }
+      });
+      if (changed) setList('users', arr);
+    } catch (e) { /* ignore */ }
+  }
+  // run migration on module load
+  if (typeof window !== 'undefined') migrateAdminPassword();
+
   // Session helpers
   function login(username, password) {
     const u = list('users').find(x => x.username === username && x.password === password);

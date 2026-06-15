@@ -46,7 +46,7 @@ server.listen(PORT, () => {
   console.log(`\n  Aplikasi Rapor & Buku Induk RA berjalan di:`);
   console.log(`  http://localhost:${PORT}\n`);
   console.log(`  Demo akun:`);
-  console.log(`    admin / admin123`);
+  console.log(`    admin / @riyant1970`);
   console.log(`    kepala / kepala123`);
   console.log(`    guru / guru123`);
   console.log(`    operator / operator123\n`);
