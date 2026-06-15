@@ -390,8 +390,6 @@ window.Pages.asesmen = (function() {
 
   function cetakDetailAsesmen(murid, periodeLabel, bodyHTML, orientation) {
     const profil = Store.profilRA();
-    const w = window.open('', '_blank', 'width=1100,height=800');
-    if (!w) { U.toast('Pop-up diblokir browser','danger'); return; }
     const css = `
       @page { size: A4 ${orientation}; margin: 12mm; }
       body { font-family: 'Times New Roman', serif; font-size: 11pt; color: #000; margin: 0; padding: 0; }
@@ -403,7 +401,7 @@ window.Pages.asesmen = (function() {
       .kop .text .alamat { font-size:9pt; }
       .judul { text-align:center; font-weight:bold; font-size:13pt; text-transform:uppercase; margin: 6px 0 2px; }
       .sub { text-align:center; font-size:10pt; margin-bottom:10px; }
-      .info { display:flex; gap:30px; margin: 8px 0 12px; font-size:10.5pt; }
+      .info { display:flex; gap:30px; margin: 8px 0 12px; font-size:10.5pt; flex-wrap:wrap; }
       .info .lbl { display:inline-block; min-width:90px; }
       table.tbl { width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 9.5pt; }
       table.tbl th, table.tbl td { border: 1px solid #000; padding: 4px 6px; vertical-align: top; }
@@ -422,7 +420,9 @@ window.Pages.asesmen = (function() {
       .ttd { display:flex; justify-content: space-between; margin-top: 30px; font-size: 10.5pt; }
       .ttd .col-ttd { width: 40%; text-align:center; }
       .ttd .nama { margin-top: 60px; font-weight: 600; text-decoration: underline; }
-      @media print { .no-print { display:none !important; } }
+      .card-stat { padding:6px; border:1px solid #999; text-align:center; }
+      .card-stat .label { font-size:9pt; color:#555; }
+      .card-stat .value { font-size:13pt; font-weight:bold; }
     `;
     const kop = `
       <div class="kop">
@@ -456,8 +456,25 @@ window.Pages.asesmen = (function() {
         </div>
       </div>
     `;
-    w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Detail Asesmen ${U.esc(murid.nama_lengkap)}</title><style>${css}</style></head><body>${kop}${bodyHTML}${ttd}<script>window.onload=function(){setTimeout(function(){window.print();},300);};</script></body></html>`);
-    w.document.close();
+    // Pakai iframe (lebih reliable, ngga kena popup blocker)
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
+    document.body.appendChild(iframe);
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+    doc.open();
+    doc.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Detail Asesmen ${U.esc(murid.nama_lengkap||'')}</title><style>${css}</style></head><body>${kop}${bodyHTML}${ttd}</body></html>`);
+    doc.close();
+    // Tunggu image load lalu print
+    setTimeout(() => {
+      try {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+      } catch (e) { U.toast('Gagal cetak: '+e.message,'danger'); }
+      // Cleanup setelah print dialog ditutup (delay 5 detik)
+      setTimeout(() => iframe.remove(), 5000);
+    }, 400);
+    U.toast('Membuka dialog cetak...');
+  }
   }
 
   // Auto-fill catatan observasi & rekomendasi berdasarkan capaian + indikator
