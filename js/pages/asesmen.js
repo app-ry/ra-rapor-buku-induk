@@ -124,8 +124,9 @@ window.Pages.asesmen = (function() {
     html += `
       <div class="d-flex justify-content-between align-items-center mt-3">
         <div class="small text-muted"><i class="bi bi-info-circle"></i> Pilih capaian per indikator. Klik <i class="bi bi-pencil-square"></i> untuk tambah catatan/bukti/rekomendasi. Klik Simpan untuk menyimpan semua.</div>
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 flex-wrap">
           <button type="button" class="btn btn-outline-success btn-sm" id="btnAllBSH"><i class="bi bi-check2-all"></i> Set Semua BSH</button>
+          <button type="button" class="btn btn-outline-success btn-sm" id="btnAutoFillAll"><i class="bi bi-magic"></i> Isi Detail Otomatis</button>
           <button type="button" class="btn btn-success" id="btnSaveAll"><i class="bi bi-save"></i> Simpan</button>
         </div>
       </div>
@@ -167,6 +168,47 @@ window.Pages.asesmen = (function() {
     root.querySelector('#btnAllBSH').onclick = () => {
       root.querySelectorAll('input[type="radio"][value="BSH"]').forEach(r => { r.checked = true; });
       U.toast('Semua diset BSH (klik Simpan untuk menyimpan)','info');
+    };
+
+    root.querySelector('#btnAutoFillAll').onclick = async () => {
+      const ok = await U.confirmModal({
+        title: 'Isi Detail Otomatis Semua Indikator?',
+        body: 'Semua indikator yang sudah dipilih capaiannya akan diisi Catatan Observasi & Rekomendasi otomatis. Catatan/rekomendasi yang sudah terisi tidak akan ditimpa kecuali Anda centang "timpa semua".<br><br><label><input type="checkbox" id="chkOverwrite"> Timpa juga yang sudah terisi</label>',
+        okText: 'Isi Otomatis & Simpan'
+      });
+      if (!ok) return;
+      const overwrite = document.getElementById('chkOverwrite')?.checked || false;
+
+      // Sync radio dulu (kalau user belum klik Simpan, capaian latest belum tersimpan)
+      const indikator = Store.list('indikator');
+      const indMap = {}; indikator.forEach(i => indMap[i.id] = i);
+      const rows = root.querySelectorAll('tr[data-ind]');
+      let count = 0;
+      rows.forEach(tr => {
+        const indId = tr.dataset.ind;
+        const r = tr.querySelector(`input[name="cap_${indId}"]:checked`);
+        const cap = r ? r.value : '';
+        if (!cap) return;
+        const ind = indMap[indId];
+        if (!ind) return;
+        const ex = Store.list('asesmen').find(a => a.murid_id === selMurid && a.ta_id === selTA && a.sem_id === selSem && a.indikator_id === indId);
+        const obj = {
+          murid_id: selMurid, ta_id: selTA, sem_id: selSem, indikator_id: indId,
+          capaian: cap,
+          intensitas: cap === 'BSB' ? 'Konsisten' : cap === 'BSH' ? 'Sering' : cap === 'MB' ? 'Kadang' : 'Jarang',
+          catatan: (overwrite || !ex?.catatan) ? generateCatatan(ind, cap) : ex.catatan,
+          rekomendasi: (overwrite || !ex?.rekomendasi) ? generateRekomendasi(ind, cap) : ex.rekomendasi,
+          bukti_url: ex?.bukti_url || '',
+          bukti_nama: ex?.bukti_nama || '',
+          tgl: U.todayISO()
+        };
+        if (ex) Store.update('asesmen', ex.id, obj);
+        else Store.add('asesmen', obj);
+        count++;
+      });
+      Store.log('autofill_asesmen', selMurid + ':' + count);
+      U.toast(`${count} indikator terisi otomatis & tersimpan`);
+      render();
     };
 
     root.querySelectorAll('[data-detail]').forEach(b => {
