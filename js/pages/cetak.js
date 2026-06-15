@@ -313,11 +313,11 @@ window.Pages.cetak = (function() {
       <div class="ttd-tempat">${U.esc(r.tanda_tangan?.tempat||profil.kota_cetak||'')}, ${U.esc(U.fmtDate(r.tanda_tangan?.tanggal||U.todayISO()))}</div>
       <div class="ttd-grid">
         <div class="col-ttd">
-          <div class="role">Orang Tua/Wali</div>
+          <div class="role">&nbsp;<br>Orang Tua/Wali</div>
           <div class="nama">${U.esc(r.tanda_tangan?.ortu_nama||'( ........................ )')}</div>
         </div>
         <div class="col-ttd">
-          <div class="role">Guru Kelas</div>
+          <div class="role">&nbsp;<br>Guru Kelas</div>
           ${guru.ttd_dataurl ? `<img class="ttd-img" src="${guru.ttd_dataurl}" alt="">` : ''}
           <div class="nama">${U.esc(guru.nama||'( ........................ )')}</div>
           ${guru.nip ? `<div class="nip">NIP. ${U.esc(guru.nip)}</div>` : (guru.nuptk ? `<div class="nip">NUPTK. ${U.esc(guru.nuptk)}</div>` : '')}
