@@ -223,10 +223,10 @@ window.Pages.cetak = (function() {
           ? `<img src="${profil.logo_kemenag_dataurl}" alt="Logo Kemenag">`
           : `<div style="width:70px;height:70px"></div>`}
         <div class="text">
-          <div style="font-size:10.5pt">KEMENTERIAN AGAMA REPUBLIK INDONESIA</div>
+          ${profil.nama_yayasan ? `<div style="font-size:11pt;font-weight:600">${U.esc(profil.nama_yayasan.toUpperCase())}</div>` : `<div style="font-size:10.5pt">KEMENTERIAN AGAMA REPUBLIK INDONESIA</div>`}
           <h2>${U.esc((profil.nama || 'RAUDHATUL ATHFAL').toUpperCase())}</h2>
           <div class="alamat">${U.esc(alamat || '-')}</div>
-          <div class="alamat-kecil">NSM: ${U.esc(profil.nsm||'-')} · NPSN: ${U.esc(profil.npsn||'-')}</div>
+          <div class="alamat-kecil">NSM: ${U.esc(profil.nsm||'-')} &mdash; NPSN: ${U.esc(profil.npsn||'-')}</div>
         </div>
         ${profil.logo_ra_dataurl
           ? `<img src="${profil.logo_ra_dataurl}" alt="Logo RA">`

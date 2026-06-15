@@ -9,11 +9,16 @@ window.Pages.profil = (function() {
         <div class="subtitle">Identitas Raudhatul Athfal</div></div>
       </div>
       <form id="profilForm" class="panel">
+        <h6 class="form-section-title">Identitas KOP / Header Rapor</h6>
         <div class="row g-3">
-          ${field('nama','Nama RA',profil.nama,true)}
+          ${field('nama_yayasan','Nama Yayasan',profil.nama_yayasan)}
+          ${field('nama','Nama Madrasah (RA)',profil.nama,true)}
           ${field('nsm','NSM',profil.nsm)}
           ${field('npsn','NPSN',profil.npsn)}
-          ${field('alamat','Alamat',profil.alamat)}
+          ${field('alamat','Alamat Madrasah',profil.alamat,false,12)}
+        </div>
+        <h6 class="form-section-title mt-4">Lokasi & Pejabat</h6>
+        <div class="row g-3">
           ${field('desa','Desa/Kelurahan',profil.desa)}
           ${field('kec','Kecamatan',profil.kec)}
           ${field('kab','Kabupaten',profil.kab)}
@@ -43,7 +48,7 @@ window.Pages.profil = (function() {
     document.getElementById('profilForm').onsubmit = async (e) => {
       e.preventDefault();
       const cur = Store.getObj('profil_ra', {});
-      ['nama','nsm','npsn','alamat','desa','kec','kab','prov','kepala_nama','kepala_nip','kota_cetak'].forEach(k => {
+      ['nama_yayasan','nama','nsm','npsn','alamat','desa','kec','kab','prov','kepala_nama','kepala_nip','kota_cetak'].forEach(k => {
         cur[k] = document.getElementById('f_'+k).value.trim();
       });
       const fr = document.getElementById('logo_ra_file').files[0];
@@ -57,8 +62,8 @@ window.Pages.profil = (function() {
       render();
     };
   }
-  function field(k, label, val, req) {
-    return `<div class="col-md-6"><label class="form-label">${label}</label>
+  function field(k, label, val, req, cols) {
+    return `<div class="col-md-${cols||6}"><label class="form-label">${label}</label>
       <input class="form-control" id="f_${k}" value="${U.esc(val||'')}" ${req?'required':''}></div>`;
   }
   return { render };

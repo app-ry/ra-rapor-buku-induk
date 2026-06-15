@@ -69,6 +69,7 @@ window.Seed = (function() {
 
     // 2. Profil RA
     Store.setObj('profil_ra', {
+      nama_yayasan:'Yayasan Miftahul Jannah Sukowono',
       nama:'RA Miftahul Jannah',
       nsm:'101235090123',
       npsn:'69876543',
