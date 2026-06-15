@@ -61,7 +61,7 @@ window.Pages.rapor = (function() {
         <div><b>${U.esc(m.nama_lengkap)}</b> · ${lockBadge}</div>
         <div class="d-flex gap-2">
           <button class="btn btn-sm btn-outline-success" id="btnGen"><i class="bi bi-magic"></i> Generate Otomatis</button>
-          <a class="btn btn-sm btn-outline-success" href="#/cetak/${m.id}" target="_blank"><i class="bi bi-printer"></i> Cetak</a>
+          <a class="btn btn-sm btn-outline-success" href="#/cetak/${m.id}"><i class="bi bi-printer"></i> Cetak</a>
         </div>
       </div>
 
