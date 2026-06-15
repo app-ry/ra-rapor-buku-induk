@@ -389,7 +389,7 @@ window.Pages.asesmen = (function() {
   }
 
   function cetakDetailAsesmen(murid, periodeLabel, bodyHTML, orientation) {
-    const profil = Store.profilRA();
+    const profil = Store.getObj('profil_ra', {});
     const css = `
       @page { size: A4 ${orientation}; margin: 12mm; }
       body { font-family: 'Times New Roman', serif; font-size: 11pt; color: #000; margin: 0; padding: 0; }
