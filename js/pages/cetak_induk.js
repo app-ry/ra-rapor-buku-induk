@@ -19,7 +19,9 @@ window.Pages.cetak_induk = (function() {
       return;
     }
 
-    const html = muridIds.map(id => indukHTML(id)).filter(Boolean).join('');
+    const lsInduk = License.status();
+    const isTrialInduk = lsInduk.state === 'trial' || lsInduk.state === 'grace';
+    const html = muridIds.map(id => indukHTML(id, isTrialInduk)).filter(Boolean).join('');
     root.innerHTML = `
       <div class="d-flex justify-content-between align-items-center mb-3 no-print flex-wrap gap-2">
         <a href="#/buku-induk" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Kembali</a>
@@ -81,7 +83,7 @@ window.Pages.cetak_induk = (function() {
     };
   }
 
-  function indukHTML(muridId) {
+  function indukHTML(muridId, isTrial) {
     const m = Store.findById('murid', muridId);
     if (!m) return '';
     const profil = Store.getObj('profil_ra', {});
@@ -91,7 +93,7 @@ window.Pages.cetak_induk = (function() {
       .filter(Boolean).join(', ');
 
     return `
-    <article class="rapor-page induk-page">
+    <article class="rapor-page induk-page${isTrial ? ' trial-watermark' : ''}">
       <div class="rapor-header">
         ${profil.logo_ra_dataurl ? `<img src="${profil.logo_ra_dataurl}" alt="">` : `<div style="width:60px;height:60px"></div>`}
         <div class="text">
@@ -271,7 +273,7 @@ window.Pages.cetak_induk = (function() {
     const periodeArr = Object.values(periode);
 
     let html = `
-    <article class="rapor-page induk-page" style="page-break-before:always">
+    <article class="rapor-page induk-page${isTrial ? ' trial-watermark' : ''}" style="page-break-before:always">
       <div class="rapor-header">
         ${profil.logo_ra_dataurl ? `<img src="${profil.logo_ra_dataurl}" alt="">` : `<div style="width:60px;height:60px"></div>`}
         <div class="text">

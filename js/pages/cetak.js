@@ -129,7 +129,10 @@ window.Pages.cetak = (function() {
       root.innerHTML = `<div class="empty"><i class="bi bi-exclamation-circle"></i><div>Tidak ada murid untuk dicetak</div><a href="#/cetak" class="btn btn-sm btn-outline-success mt-2">Kembali</a></div>`;
       return;
     }
-    const html = muridIds.map(id => raporHTML(id, ta?.id, sem?.id)).join('');
+    // Check trial watermark
+    const ls = License.status();
+    const isTrial = ls.state === 'trial' || ls.state === 'grace';
+    const html = muridIds.map(id => raporHTML(id, ta?.id, sem?.id, isTrial)).join('');
     const filename = opts.kelasId
       ? `Rapor_Kelas_${(Store.findById('kelas', opts.kelasId)?.nama||'').replace(/\s+/g,'_')}_${ta?.label?.replace('/','-')||''}.pdf`
       : `Rapor_${(Store.findById('murid', muridIds[0])?.nama_lengkap||'').replace(/\s+/g,'_')}.pdf`;
@@ -182,7 +185,9 @@ window.Pages.cetak = (function() {
     // Build offscreen tapi tetap visible secara render (opacity 0)
     const wrap = document.createElement('div');
     wrap.style.cssText = 'position:absolute;left:0;top:0;width:210mm;background:#fff;opacity:0;pointer-events:none;z-index:-9999';
-    wrap.innerHTML = muridIds.map(id => raporHTML(id, ta?.id, sem?.id)).join('');
+    const ls = License.status();
+    const isTrial = ls.state === 'trial' || ls.state === 'grace';
+    wrap.innerHTML = muridIds.map(id => raporHTML(id, ta?.id, sem?.id, isTrial)).join('');
     document.body.appendChild(wrap);
 
     // Tambah pagebreak class manual untuk html2pdf
@@ -226,7 +231,7 @@ window.Pages.cetak = (function() {
     }
   }
 
-  function raporHTML(muridId, taId, semId) {
+  function raporHTML(muridId, taId, semId, isTrial) {
     const m = Store.findById('murid', muridId);
     if (!m) return '';
     const profil = Store.getObj('profil_ra', {});
@@ -252,7 +257,7 @@ window.Pages.cetak = (function() {
     const alamat = [profil.alamat, profil.desa, profil.kec, profil.kab, profil.prov].filter(Boolean).join(', ');
 
     return `
-    <article class="rapor-page">
+    <article class="rapor-page${isTrial ? ' trial-watermark' : ''}">
       <div class="rapor-header">
         ${profil.logo_ra_dataurl
           ? `<img src="${profil.logo_ra_dataurl}" alt="Logo RA">`

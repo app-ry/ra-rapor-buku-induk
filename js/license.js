@@ -17,8 +17,9 @@ window.License = (function() {
     return bytes;
   }
 
-  const TRIAL_DAYS = 30;
+  const TRIAL_DAYS = 5;
   const WARN_DAYS = 60;
+  const TRIAL_WARN_DAYS = 2;
   const STORAGE_KEY = 'license_info';
 
   // ── Helpers ──
@@ -116,7 +117,7 @@ window.License = (function() {
         trial_start: trialStart,
         trial_end: trialEnd,
         days_left: Math.max(0, trialLeft),
-        warn: trialLeft <= 14
+        warn: trialLeft <= TRIAL_WARN_DAYS,
       };
     }
 
