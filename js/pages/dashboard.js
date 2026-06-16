@@ -36,15 +36,6 @@ window.Pages.dashboard = (function() {
         </div>
       </div>
 
-      <div class="demo-banner">
-        <i class="bi bi-lightbulb-fill" style="font-size:20px"></i>
-        <div class="flex-grow-1">
-          <b>Mode Demo:</b> Aplikasi sudah berisi data contoh RA Miftahul Jannah dengan murid Syifa Aulia.
-          Coba klik tombol di samping untuk melihat rapor demo lengkap dengan deskripsi otomatis.
-        </div>
-        <a href="#/cetak/mrd_syifa" class="btn btn-sm btn-success"><i class="bi bi-eye"></i> Lihat Demo Rapor</a>
-      </div>
-
       <div class="row g-3 mb-3">
         <div class="col-6 col-md-3"><div class="card-stat"><div class="icon"><i class="bi bi-people"></i></div><div><div class="label">Murid</div><div class="value">${murid.length}</div></div></div></div>
         <div class="col-6 col-md-3"><div class="card-stat"><div class="icon"><i class="bi bi-collection"></i></div><div><div class="label">Kelas</div><div class="value">${kelas.length}</div></div></div></div>
