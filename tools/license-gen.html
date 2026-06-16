@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>License Generator — Aplikasi Rapor & Buku Induk RA</title>
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f0f2f5; color: #212529; }
+  .wrap { max-width: 600px; margin: 40px auto; padding: 16px; }
+  .card { background: #fff; border-radius: 12px; padding: 28px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 16px; }
+  h1 { color: #2e7d32; margin-bottom: 6px; font-size: 20px; }
+  h2 { font-size: 16px; margin-bottom: 16px; }
+  .sub { color: #6c757d; font-size: 13px; margin-bottom: 20px; }
+  label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+  input, select { width: 100%; padding: 9px 12px; border: 1.5px solid #dee2e6; border-radius: 8px; font-size: 14px; font-family: inherit; }
+  input:focus { outline: none; border-color: #2e7d32; box-shadow: 0 0 0 3px rgba(46,125,50,.15); }
+  .row { display: flex; gap: 12px; }
+  .row > * { flex: 1; }
+  .mb { margin-bottom: 14px; }
+  button { background: #2e7d32; color: #fff; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; width: 100%; }
+  button:hover { background: #1b5e20; }
+  .out { margin-top: 12px; padding: 14px; background: #f8f9fa; border-radius: 8px; font-family: 'Cascadia Code', 'Consolas', monospace; font-size: 11px; word-break: break-all; white-space: pre-wrap; min-height: 44px; border: 1px solid #e9ecef; }
+  .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .badge-green { background: #d4edda; color: #155724; }
+  .badge-red { background: #f8d7da; color: #721c24; }
+  .note { font-size: 12px; color: #856404; background: #fff3cd; padding: 10px 12px; border-radius: 8px; margin-top: 12px; }
+  .history-item { font-size: 12px; padding: 6px 0; border-bottom: 1px solid #f0f0f0; }
+  #historyList { max-height: 200px; overflow-y: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>🔑 License Generator</h1>
+    <div class="sub">Aplikasi Rapor & Buku Induk RA Digital — Offline license generation tool.</div>
+
+    <div class="mb">
+      <label>Nama RA / Lembaga</label>
+      <input type="text" id="namaRA" placeholder="contoh: RA Miftahul Jannah Sukowono" />
+    </div>
+
+    <div class="row mb">
+      <div>
+        <label>Masa Berlaku (tahun)</label>
+        <select id="tahun">
+          <option value="1">1 Tahun</option>
+          <option value="2">2 Tahun</option>
+          <option value="3">3 Tahun</option>
+        </select>
+      </div>
+      <div>
+        <label>Mulai Tanggal</label>
+        <input type="date" id="startDate" />
+      </div>
+    </div>
+
+    <button id="btnGenerate"><span id="btnText">🎫 Generate Kunci Lisensi</span></button>
+
+    <div class="out" id="output">Kunci akan muncul di sini...</div>
+    <button id="btnCopy" style="margin-top:8px;background:#495057;" disabled>📋 Salin Kunci</button>
+  </div>
+
+  <div class="card">
+    <h2>📋 Riwayat Generate</h2>
+    <div id="historyList"><div class="small text-muted">Belum ada riwayat. Data disimpan di localStorage browser ini.</div></div>
+    <button id="btnClear" style="background:#dc3545;margin-top:8px;" disabled>🗑 Hapus Riwayat</button>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ⚠️ SAME SECRET as license.js — DO NOT SHARE
+  const _SECRET_RAW = 'UmFoJldGhJLYmFjYSBrdG9yByYWFrYW4gUiByBjaXJpQnJhbmdhbSBpY29ubGljZW5zZSBrZQ==';
+
+  function _decodeSecret() {
+    const bin = atob(_SECRET_RAW);
+    return new Uint8Array(bin.length).map((_, i) => bin.charCodeAt(i));
+  }
+
+  async function _hmacSign(secretBytes, data) {
+    const key = await crypto.subtle.importKey('raw', secretBytes, { name:'HMAC', hash:'SHA-256' }, false, ['sign']);
+    const enc = new TextEncoder().encode(data);
+    const sig = await crypto.subtle.sign('HMAC', key, enc);
+    return btoa(String.fromCharCode(...new Uint8Array(sig)));
+  }
+
+  // ── Commons ──
+
+  function dateMs(ds) {
+    if (!ds) return 0;
+    const d = new Date(ds);
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  }
+  function fmtDate(ts) {
+    if (!ts) return '-';
+    return new Date(ts).toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
+  }
+
+  // ── History ──
+
+  function loadHistory() {
+    try { return JSON.parse(localStorage.getItem('licgen_history') || '[]'); }
+    catch (e) { return []; }
+  }
+  function saveHistory(arr) {
+    localStorage.setItem('licgen_history', JSON.stringify(arr));
+  }
+  function renderHistory() {
+    const hist = loadHistory();
+    const el = document.getElementById('historyList');
+    const btn = document.getElementById('btnClear');
+    if (hist.length === 0) {
+      el.innerHTML = '<div class="small text-muted">Belum ada riwayat.</div>';
+      btn.disabled = true;
+      return;
+    }
+    btn.disabled = false;
+    el.innerHTML = hist.slice().reverse().map((h, i) =>
+      `<div class="history-item">
+        <b>${h.nama_ra}</b> · ${h.tahun} tahun · berlaku ${fmtDate(h.start)} s/d ${fmtDate(h.expired_at)}
+        <span class="badge ${h.expired_at <= Date.now() ? 'badge-red' : 'badge-green'}">${h.expired_at <= Date.now() ? 'EXPIRED' : 'AKTIF'}</span>
+      </div>`
+    ).join('');
+  }
+
+  // ── Init ──
+
+  const today = new Date();
+  document.getElementById('startDate').value = today.toISOString().slice(0,10);
+  renderHistory();
+
+  document.getElementById('btnGenerate').onclick = async function() {
+    const namaRA = document.getElementById('namaRA').value.trim();
+    const tahun = parseInt(document.getElementById('tahun').value);
+    const startStr = document.getElementById('startDate').value;
+
+    if (!namaRA) { alert('Nama RA wajib diisi!'); return; }
+    if (!startStr) { alert('Tanggal mulai wajib diisi!'); return; }
+
+    const btnText = document.getElementById('btnText');
+    btnText.textContent = '🔐 Generating...';
+
+    try {
+      const startMs = dateMs(startStr);
+      // Expiry = start + N years (end of day)
+      const expDate = new Date(startStr);
+      expDate.setFullYear(expDate.getFullYear() + tahun);
+      const expiredAt = dateMs(expDate.toISOString().slice(0,10));
+
+      // Build HMAC data
+      const dataToSign = `v=1|ra=${namaRA}|exp=${expiredAt}`;
+      const secret = _decodeSecret();
+      const sig = await _hmacSign(secret, dataToSign);
+
+      const payload = { v:1, nama_ra:namaRA, expired_at:expiredAt, sig };
+      const key = btoa(JSON.stringify(payload));
+
+      document.getElementById('output').textContent = key;
+      document.getElementById('btnCopy').disabled = false;
+
+      // Save history
+      const hist = loadHistory();
+      hist.push({ nama_ra:namaRA, tahun, start: startMs, expired_at: expiredAt, sig: sig.slice(0,8)+'...' });
+      saveHistory(hist);
+      renderHistory();
+    } catch (e) {
+      document.getElementById('output').textContent = 'ERROR: ' + e.message;
+    }
+    document.getElementById('btnText').textContent = '🎫 Generate Kunci Lisensi';
+    btnText.textContent = '🎫 Generate Kunci Lisensi';
+  };
+
+  document.getElementById('btnCopy').onclick = function() {
+    const text = document.getElementById('output').textContent;
+    if (!text || text.startsWith('ERROR') || text.startsWith('Kunci')) return;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('btnCopy');
+      btn.textContent = '✅ Tersalin!';
+      setTimeout(() => { btn.textContent = '📋 Salin Kunci'; }, 2000);
+    }).catch(() => alert('Gagal menyalin. Silakan copy manual.'));
+  };
+
+  document.getElementById('btnClear').onclick = function() {
+    if (!confirm('Hapus semua riwayat generate?')) return;
+    localStorage.removeItem('licgen_history');
+    renderHistory();
+  };
+})();
+</script>
+</body>
+</html>

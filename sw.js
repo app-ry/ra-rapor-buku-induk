@@ -1,17 +1,19 @@
 // Service Worker — Aplikasi Rapor & Buku Induk RA
-const CACHE = 'ra-v1-2026-06-16-r18';
+const CACHE = 'ra-v1-2026-06-16-r19';
 const SHELL = [
   './',
   './index.html',
   './manifest.webmanifest',
   './css/app.css',
   './css/print.css',
+  './js/license.js',
   './js/lib/utils.js',
   './js/store.js',
   './js/seed.js',
   './js/narasi.js',
   './js/excel.js',
   './js/app.js',
+  './js/pages/license.js',
   './js/pages/dashboard.js',
   './js/pages/profil.js',
   './js/pages/tahun_ajaran.js',

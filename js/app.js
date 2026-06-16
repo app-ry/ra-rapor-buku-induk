@@ -15,13 +15,15 @@ window.App = (function() {
     { path:'cetak-induk', icon:'bi-journal-text', label:'Cetak Buku Induk', render:(ctx)=>Pages.cetak_induk.render(ctx), roles:['admin','kepala','guru','operator'], hidden:true },
     { path:'rekap', icon:'bi-bar-chart', label:'Rekap Perkembangan', render:()=>Pages.rekap.render(), roles:['admin','kepala','guru'] },
     { path:'pengguna', icon:'bi-people', label:'Pengaturan Pengguna', render:()=>Pages.pengguna.render(), roles:['admin'] },
-    { path:'backup', icon:'bi-cloud-arrow-down', label:'Backup Data', render:()=>Pages.backup.render(), roles:['admin'] }
+    { path:'backup', icon:'bi-cloud-arrow-down', label:'Backup Data', render:()=>Pages.backup.render(), roles:['admin'] },
+    { path:'license', icon:'bi-shield-lock', label:'Lisensi', render:()=>Pages.license.render(), roles:['admin'] }
   ];
 
   // Pages namespace
   window.Pages = window.Pages || {};
 
   function init() {
+    License.init();
     if (Seed.needsSeed()) {
       Seed.seedAll();
     }
@@ -55,6 +57,15 @@ window.App = (function() {
     document.getElementById('loginScreen').classList.add('d-none');
     document.getElementById('appShell').classList.remove('d-none');
 
+    const ls = License.status();
+    if (ls.state === 'expired' && user.role !== 'admin') {
+      // Non-admin: redirect to license page if expired
+      document.getElementById('sidebarRaName').textContent = 'Lisensi Kadaluarsa';
+      location.hash = '#/license';
+    }
+
+    _displayLicenseWarning(ls);
+
     const profil = Store.getObj('profil_ra', {});
     document.getElementById('sidebarRaName').textContent = profil.nama || 'RA Demo';
 
@@ -86,6 +97,23 @@ window.App = (function() {
   function route() {
     const user = Store.currentUser();
     if (!user) { showLogin(); return; }
+
+    const ls = License.status();
+    // Expired: only license page accessible
+    if (ls.state === 'expired') {
+      const hash = location.hash.replace(/^#\/?/, '') || 'dashboard';
+      if (hash.split('/')[0] !== 'license') {
+        location.hash = '#/license';
+        return;
+      }
+    }
+    // Show/clear banner as needed
+    if (ls.state === 'trial' || ls.state === 'grace' || ls.warn) {
+      _displayLicenseWarning(ls);
+    } else {
+      _clearLicenseBanner();
+    }
+
     const hash = location.hash.replace(/^#\/?/, '') || 'dashboard';
     const [path, ...rest] = hash.split('/');
     const params = rest;
@@ -120,6 +148,38 @@ window.App = (function() {
 
   function go(path) {
     location.hash = '#/' + path;
+  }
+
+  function _displayLicenseWarning(ls) {
+    const root = document.getElementById('pageRoot');
+    // Remove existing banner
+    const existing = document.getElementById('licenseBanner');
+    if (existing) existing.remove();
+
+    if (ls.state === 'active' && ls.warn) {
+      const banner = document.createElement('div');
+      banner.id = 'licenseBanner';
+      banner.style.cssText = 'background:#fff3cd;color:#664d03;padding:8px 16px;font-size:13px;text-align:center;border-bottom:1px solid #ffc107;';
+      banner.innerHTML = `<i class="bi bi-exclamation-triangle"></i> Lisensi akan berakhir dalam <b>${ls.days_left}</b> hari. <a href="#/license" style="color:#664d03;font-weight:700;text-decoration:underline">Perpanjang sekarang</a>`;
+      root.parentNode.insertBefore(banner, root);
+    } else if (ls.state === 'trial') {
+      const banner = document.createElement('div');
+      banner.id = 'licenseBanner';
+      banner.style.cssText = 'background:#cff4fc;color:#055160;padding:8px 16px;font-size:13px;text-align:center;border-bottom:1px solid #0dcaf0;';
+      banner.innerHTML = `<i class="bi bi-info-circle"></i> Masa uji coba: sisa <b>${ls.days_left}</b> hari. <a href="#/license" style="color:#055160;font-weight:700;text-decoration:underline">Aktifkan lisensi</a>`;
+      root.parentNode.insertBefore(banner, root);
+    } else if (ls.state === 'grace') {
+      const banner = document.createElement('div');
+      banner.id = 'licenseBanner';
+      banner.style.cssText = 'background:#ffe69c;color:#664d03;padding:8px 16px;font-size:13px;text-align:center;border-bottom:1px solid #ffc107;';
+      banner.innerHTML = `<i class="bi bi-exclamation-diamond"></i> Masa uji coba berakhir! Segera <a href="#/license" style="color:#664d03;font-weight:700;text-decoration:underline">aktivasi lisensi</a> (${ls.days_left} hari tersisa)`;
+      root.parentNode.insertBefore(banner, root);
+    }
+  }
+
+  function _clearLicenseBanner() {
+    const existing = document.getElementById('licenseBanner');
+    if (existing) existing.remove();
   }
 
   document.addEventListener('DOMContentLoaded', init);
