@@ -1,11 +1,10 @@
-// license.js — Lisensi aplikasi (trial 30 hari + kunci 1 tahun)
+// license.js — Lisensi aplikasi (trial 5 hari + kunci 1 tahun)
 window.License = (function() {
   'use strict';
 
   // --- CONSTANTS (obfuscated split secret, dirakit ulang saat runtime) ---
   const _S = [
-    'UmFo','rJld','GhJL','YmFj','YSBr','dG9y','ByYW','FrYW','4gU','iBy','Bja',
-    'XJp','QnJ','hbmd','hbS','Bp','Y29u','bGl','jZW5z','ZSBr','ZQ=='
+    'UmFo','YXNp','YUt1','bmNp','QmFj','a2Rv','b3JV','bnR1','a0xp','c2Vu','c2lS','QQ=='
   ].join('');
   // Decodes to: "RahasiaKunciBackdoorUntukLisensiRA" (raw bytes for HMAC key)
 

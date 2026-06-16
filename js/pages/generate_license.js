@@ -75,7 +75,7 @@ window.Pages.generate_license = {
 };
 
 // ── Secret (sama dengan license.js) ──
-const _GEN_SECRET_RAW = 'UmFoJldGhJLYmFjYSBrdG9yByYWFrYW4gUiByBjaXJpQnJhbmdhbSBpY29ubGljZW5zZSBrZQ==';
+const _GEN_SECRET_RAW = 'UmFoYXNpYUt1bmNpQmFja2Rvb3JVbnR1a0xpc2Vuc2lSQQ==';
 
 function _genDecodeSecret() {
   const bin = atob(_GEN_SECRET_RAW);
