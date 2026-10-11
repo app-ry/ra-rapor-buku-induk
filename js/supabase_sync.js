@@ -77,6 +77,22 @@
         p_app_slug: APP_SLUG, p_recipient: recipient || ''
       }, { success: null, codes: [] });
     },
+    adminEditCode: function (adminKey, code, recipient) {
+      return safeCall('admin_edit_code_by_code', {
+        p_admin_key: String(adminKey || ''), p_code: String(code || '').toUpperCase(),
+        p_app_slug: APP_SLUG, p_recipient: recipient || ''
+      }, { success: null, reason: 'network_error' });
+    },
+    adminRevokeCode: function (adminKey, code) {
+      return safeCall('admin_revoke_code_by_code', {
+        p_admin_key: String(adminKey || ''), p_code: String(code || '').toUpperCase(), p_app_slug: APP_SLUG
+      }, { success: null, reason: 'network_error' });
+    },
+    adminDeleteCode: function (adminKey, code) {
+      return safeCall('admin_delete_code_by_code', {
+        p_admin_key: String(adminKey || ''), p_code: String(code || '').toUpperCase(), p_app_slug: APP_SLUG
+      }, { success: null, reason: 'network_error' });
+    },
     adminRegisterCode: function (adminKey, code, recipient) {
       return safeCall('admin_register_code', {
         p_admin_key: String(adminKey || ''),

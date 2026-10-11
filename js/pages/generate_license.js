@@ -75,9 +75,28 @@
       document.getElementById('statRevoked').textContent = codes.filter(function (c) { return c.is_active === false; }).length;
       body.innerHTML = codes.length ? codes.map(function (c, i) {
         var active = c.is_active !== false, used = Number(c.used_count || 0) > 0;
-        return '<tr><td><code>' + esc(c.code) + '</code></td><td>' + esc(c.recipient || '-') + '</td><td>' + date(c.created_at) + '</td><td><span class="badge ' + (!active ? 'bg-danger' : used ? 'bg-success' : 'bg-secondary') + '">' + (!active ? 'Dicabut' : used ? 'Terpakai' : 'Belum Dipakai') + '</span></td><td><button class="btn btn-sm btn-outline-secondary copy-code" data-code="' + esc(c.code) + '"><i class="bi bi-clipboard"></i></button></td></tr>';
+        return '<tr><td><code>' + esc(c.code) + '</code></td><td>' + esc(c.recipient || '-') + '</td><td>' + date(c.created_at) + '</td><td><span class="badge ' + (!active ? 'bg-danger' : used ? 'bg-success' : 'bg-secondary') + '">' + (!active ? 'Dicabut' : used ? 'Terpakai' : 'Belum Dipakai') + '</span></td><td class="text-nowrap"><button class="btn btn-sm btn-outline-secondary copy-code" title="Salin" data-code="' + esc(c.code) + '"><i class="bi bi-clipboard"></i></button> <button class="btn btn-sm btn-outline-primary edit-code" title="Edit" data-code="' + esc(c.code) + '" data-recipient="' + esc(c.recipient || '') + '"><i class="bi bi-pencil"></i></button> <button class="btn btn-sm btn-outline-danger delete-code" title="Hapus" data-code="' + esc(c.code) + '"><i class="bi bi-trash"></i></button> <button class="btn btn-sm btn-outline-warning revoke-code" title="Cabut Kode" data-code="' + esc(c.code) + '"' + (!active ? ' disabled' : '') + '><i class="bi bi-slash-circle"></i></button></td></tr>';
       }).join('') : '<tr><td colspan="5" class="text-center text-muted py-4">Belum ada kode.</td></tr>';
       body.querySelectorAll('.copy-code').forEach(function (b) { b.onclick = function () { navigator.clipboard.writeText(b.dataset.code); b.innerHTML = '✓'; }; });
+      body.querySelectorAll('.edit-code').forEach(function (b) { b.onclick = async function () {
+        var recipient = window.prompt('Edit penerima/catatan:', b.dataset.recipient || '');
+        if (recipient === null) return;
+        var r = await SupabaseSync.adminEditCode(key(), b.dataset.code, recipient.trim());
+        if (r && r.success === true) { alertBox('Kode berhasil diedit.', 'success'); reload(); }
+        else alertBox(r && r.reason === 'function_not_found' ? 'RPC Edit belum dipasang di Pusat Lisensi.' : 'Edit kode gagal.', 'danger');
+      }; });
+      body.querySelectorAll('.delete-code').forEach(function (b) { b.onclick = async function () {
+        if (!window.confirm('Hapus kode ini? Kode yang sudah terhubung akun tidak dapat dihapus.')) return;
+        var r = await SupabaseSync.adminDeleteCode(key(), b.dataset.code);
+        if (r && r.success === true) { alertBox('Kode berhasil dihapus.', 'success'); reload(); }
+        else alertBox(r && r.reason === 'has_account' ? 'Kode sudah dipakai akun dan tidak dapat dihapus.' : 'Hapus kode gagal.', 'danger');
+      }; });
+      body.querySelectorAll('.revoke-code').forEach(function (b) { b.onclick = async function () {
+        if (!window.confirm('Cabut kode ini? Kode tidak dapat dipakai lagi.')) return;
+        var r = await SupabaseSync.adminRevokeCode(key(), b.dataset.code);
+        if (r && r.success === true) { alertBox('Kode berhasil dicabut.', 'success'); reload(); }
+        else alertBox('Cabut kode gagal.', 'danger');
+      }; });
     }
     async function reload() {
       var r = await SupabaseSync.adminListCodes(key());
