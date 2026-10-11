@@ -1,9 +1,35 @@
 // pengguna.js — kelola users (admin only)
 window.Pages.pengguna = (function() {
   function render() {
+    const current = Store.currentUser();
+    const root = document.getElementById('pageRoot');
+    // Pada produksi, identitas akun dikelola Pusat Lisensi. Jangan sediakan
+    // CRUD user lokal yang dapat membuat akun bypass lisensi pusat.
+    if (current && current.remote_account) {
+      root.innerHTML = `
+        <div class="page-header">
+          <div><h1><i class="bi bi-people"></i> Akun Lembaga</h1>
+          <div class="subtitle">Identitas akun dikelola oleh Pusat Lisensi</div></div>
+        </div>
+        <div class="alert alert-info">
+          <i class="bi bi-info-circle"></i>
+          Aplikasi ini menggunakan model <b>1 kode aktivasi = 1 akun/lembaga</b>.
+          Pengelolaan username, password, dan status lisensi dilakukan melalui
+          Pusat Lisensi. Data siswa, guru, dan rapor tetap tersimpan lokal di perangkat ini.
+        </div>
+        <div class="panel">
+          <h5 class="panel-title">Akun aktif</h5>
+          <dl class="row mb-0">
+            <dt class="col-sm-3">Username</dt><dd class="col-sm-9">${U.esc(current.username || '-')}</dd>
+            <dt class="col-sm-3">Nama</dt><dd class="col-sm-9">${U.esc(current.nama || '-')}</dd>
+            <dt class="col-sm-3">Lembaga</dt><dd class="col-sm-9">${U.esc(current.madrasah || '-')}</dd>
+            <dt class="col-sm-3">Status</dt><dd class="col-sm-9"><span class="badge bg-success">Aktif</span></dd>
+          </dl>
+        </div>`;
+      return;
+    }
     const list = Store.list('users');
     const kelas = Store.list('kelas');
-    const root = document.getElementById('pageRoot');
     root.innerHTML = `
       <div class="page-header">
         <div><h1><i class="bi bi-people"></i> Pengaturan Pengguna</h1>

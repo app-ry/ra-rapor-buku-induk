@@ -33,14 +33,12 @@ Buka http://localhost:8080 di browser.
 
 Bisa juga buka `index.html` langsung dari file explorer (double click), tapi beberapa fitur PWA tidak akan aktif.
 
-## Akun Demo
+## Akun dan keamanan
 
-| Username | Password | Role |
-|----------|----------|------|
-| admin    | admin123 | Admin RA (semua akses) |
-| kepala   | kepala123 | Kepala RA |
-| guru     | guru123 | Guru Kelas (hanya kelasnya) |
-| operator | operator123 | Operator |
+Versi produksi menggunakan akun berbasis kode aktivasi melalui Pusat Lisensi.
+Jangan menyimpan atau membagikan Admin Key di repository, dokumentasi publik,
+backup, atau chat pengguna. Kredensial akun lokal/demo yang pernah ada di
+versi pengembangan tidak boleh digunakan untuk operasional produksi.
 
 ## Data Demo
 
@@ -75,7 +73,11 @@ ra-rapor-buku-induk/
     └── pages/              # halaman per menu
 ```
 
-Semua data disimpan di **localStorage** browser (prefix `ra_v1_`). Jangan menghapus cache browser tanpa backup dulu.
+Data siswa, asesmen, rapor, dan buku induk disimpan di **localStorage** browser
+(prefix `ra_v1_`) dan tidak dikirim ke Supabase. Karena data memuat informasi
+pribadi anak, gunakan perangkat/operator yang terlindungi, lakukan backup
+terenkripsi secara berkala, dan jangan mengirim backup JSON tanpa perlindungan.
+Jangan menghapus cache browser sebelum memastikan backup sudah berhasil.
 
 ## Workflow Penggunaan
 

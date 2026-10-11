@@ -25,6 +25,13 @@ window.App = (function() {
 
   function init() {
     License.init();
+    // Setelah migrasi ke akun pusat, sesi admin lokal lama tidak boleh
+    // melewati verifikasi Supabase. Data lokal tetap dipertahankan.
+    if (window.SupabaseSync && SupabaseSync.isConfigured()) {
+      Store.migrateLegacyPasswords();
+      const existing = Store.currentUser();
+      if (existing && !existing.remote_account) Store.logout();
+    }
     if (Seed.needsSeed()) {
       Seed.seedAll();
     }
@@ -58,21 +65,24 @@ window.App = (function() {
       const u = document.getElementById('loginUsername').value.trim();
       const p = document.getElementById('loginPassword').value;
       let user = null;
-      if (window.SupabaseSync && SupabaseSync.isConfigured()) {
+      const remoteConfigured = window.SupabaseSync && SupabaseSync.isConfigured();
+      if (remoteConfigured) {
         const remote = await SupabaseSync.loginAccount(u, p);
         if (remote.result && remote.result.valid === true) {
           user = Store.loginRemoteAccount(remote.result, remote.passwordHash);
-        } else if (remote.result && remote.result.valid === false && remote.result.reason !== 'network_error') {
-          // Admin lokal lama tetap boleh masuk untuk mengelola aplikasi saat
-          // akun admin pusat belum dimigrasikan atau lisensi server expired.
-          const localCandidate = Store.list('users').find(x => x.username === u && x.role === 'admin');
-          user = localCandidate ? Store.login(u, p) : null;
-          if (!user) { showAlert(_remoteReason(remote.result.reason)); return; }
+        } else {
+          const reason = remote.result && remote.result.reason;
+          showAlert(reason === 'network_error'
+            ? 'Tidak dapat terhubung ke Pusat Lisensi. Login lokal dinonaktifkan pada versi produksi.'
+            : _remoteReason(reason));
+          return;
         }
+      } else {
+        // Hanya untuk lingkungan pengembangan tanpa konfigurasi pusat.
+        user = Store.login(u, p);
       }
-      if (!user) user = Store.login(u, p);
       if (!user) {
-        showAlert('Username atau password salah, atau koneksi ke Pusat Lisensi sedang tidak tersedia.');
+        showAlert('Username atau password salah.');
         return;
       }
       Store.log('login', user.id);
@@ -226,13 +236,13 @@ window.App = (function() {
       const banner = document.createElement('div');
       banner.id = 'licenseBanner';
       banner.style.cssText = 'background:#cff4fc;color:#055160;padding:8px 16px;font-size:13px;text-align:center;border-bottom:1px solid #0dcaf0;';
-      banner.innerHTML = `<i class="bi bi-info-circle"></i> Masa uji coba: sisa <b>${ls.days_left}</b> hari. <a href="#/license" style="color:#055160;font-weight:700;text-decoration:underline">Aktifkan lisensi</a>`;
+      banner.innerHTML = `<i class="bi bi-info-circle"></i> Masa uji coba: sisa <b>${ls.days_left}</b> hari. <a href="#/license" style="color:#055160;font-weight:700;text-decoration:underline">Masuk/daftar akun Pusat Lisensi</a>`;
       root.parentNode.insertBefore(banner, root);
     } else if (ls.state === 'grace') {
       const banner = document.createElement('div');
       banner.id = 'licenseBanner';
       banner.style.cssText = 'background:#ffe69c;color:#664d03;padding:8px 16px;font-size:13px;text-align:center;border-bottom:1px solid #ffc107;';
-      banner.innerHTML = `<i class="bi bi-exclamation-diamond"></i> Masa uji coba berakhir! Segera <a href="#/license" style="color:#664d03;font-weight:700;text-decoration:underline">aktivasi lisensi</a> (${ls.days_left} hari tersisa)`;
+      banner.innerHTML = `<i class="bi bi-exclamation-diamond"></i> Masa uji coba berakhir! Segera <a href="#/license" style="color:#664d03;font-weight:700;text-decoration:underline">masuk/daftar akun Pusat Lisensi</a> (${ls.days_left} hari tersisa)`;
       root.parentNode.insertBefore(banner, root);
     }
   }

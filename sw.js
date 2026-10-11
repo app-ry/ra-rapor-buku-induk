@@ -1,5 +1,6 @@
 // Service Worker — Aplikasi Rapor & Buku Induk RA
-const CACHE = 'ra-v1-2026-06-16-r22';
+// Bump this value on every production deployment so clients do not retain stale JavaScript.
+const CACHE = 'ra-v1-2026-10-12-r23';
 const SHELL = [
   './',
   './index.html',

@@ -1,20 +1,6 @@
-// license.js — Lisensi aplikasi (trial 5 hari + kunci 1 tahun)
+// license.js — Status lisensi berbasis akun Pusat Lisensi
 window.License = (function() {
   'use strict';
-
-  // --- CONSTANTS (obfuscated split secret, dirakit ulang saat runtime) ---
-  const _S = [
-    'UmFo','YXNp','YUt1','bmNp','QmFj','a2Rv','b3JV','bnR1','a0xp','c2Vu','c2lS','QQ=='
-  ].join('');
-  // Decodes to: "RahasiaKunciBackdoorUntukLisensiRA" (raw bytes for HMAC key)
-
-  function _decodeSecret() {
-    // Base64 decode
-    const bin = atob(_S);
-    const bytes = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-    return bytes;
-  }
 
   const TRIAL_DAYS = 5;
   const WARN_DAYS = 60;
@@ -39,26 +25,6 @@ window.License = (function() {
     return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
   }
 
-  // ── HMAC Verification via Web Crypto ──
-
-  async function _hmacSign(secretBytes, data) {
-    const key = await crypto.subtle.importKey(
-      'raw', secretBytes, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
-    );
-    const enc = new TextEncoder().encode(data);
-    const sig = await crypto.subtle.sign('HMAC', key, enc);
-    return btoa(String.fromCharCode(...new Uint8Array(sig)));
-  }
-
-  async function _hmacVerify(secretBytes, data, signatureB64) {
-    const key = await crypto.subtle.importKey(
-      'raw', secretBytes, { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']
-    );
-    const enc = new TextEncoder().encode(data);
-    const sigBytes = Uint8Array.from(atob(signatureB64), c => c.charCodeAt(0));
-    return crypto.subtle.verify('HMAC', key, sigBytes, enc);
-  }
-
   // ── Public API ──
 
   /**
@@ -77,7 +43,7 @@ window.License = (function() {
   /**
    * Returns license status:
    *   active  — licensed and not expired
-   *   trial   — within 30-day trial
+   *   trial   — within 5-day local onboarding trial
    *   grace   — expired but within 3-day grace period (read-only)
    *   expired — no valid license, trial over, grace over
    */
@@ -93,8 +59,7 @@ window.License = (function() {
         days_left: null, warn: false
       };
     }
-    // Admin lokal tetap memiliki akses pengelolaan saat lisensi pengguna
-    // belum dimigrasikan/expired. Jangan tampilkan admin sebagai trial.
+    // Jalur ini hanya kompatibilitas untuk lingkungan tanpa Supabase.
     if (remoteUser && remoteUser.role === 'admin') {
       return {
         state: 'active', reason: 'admin_access', is_admin: true,
@@ -156,67 +121,12 @@ window.License = (function() {
   }
 
   /**
-   * Activate a license key.
-   * Key format: base64 JSON {v:1, nama_ra, expired_at, sig}
-   * Returns {ok, message}
-   */
-  async function activate(keyString) {
-    try {
-      const raw = atob(keyString.trim());
-      const payload = JSON.parse(raw);
-
-      if (payload.v !== 1) {
-        return { ok: false, message: 'Versi kunci tidak dikenali.' };
-      }
-      if (!payload.nama_ra || !payload.expired_at || !payload.sig) {
-        return { ok: false, message: 'Format kunci tidak valid.' };
-      }
-
-      // Verify HMAC
-      const dataToSign = `v=${payload.v}|ra=${payload.nama_ra}|exp=${payload.expired_at}`;
-      const secret = _decodeSecret();
-      const valid = await _hmacVerify(secret, dataToSign, payload.sig);
-
-      if (!valid) {
-        return { ok: false, message: 'Kunci tidak valid (signature gagal diverifikasi).' };
-      }
-
-      // Check expiry
-      if (payload.expired_at <= todayMs()) {
-        return { ok: false, message: 'Kunci ini sudah kadaluarsa.' };
-      }
-
-      // Store
-      const info = _getInfo() || { trial_start: todayMs(), keys: [] };
-      // Avoid duplicate keys
-      const exists = info.keys.some(k => k.sig === payload.sig);
-      if (!exists) {
-        info.keys.push({
-          nama_ra: payload.nama_ra,
-          expired_at: payload.expired_at,
-          sig: payload.sig,
-          activated_at: todayMs()
-        });
-        _setInfo(info);
-      }
-
-      const daysLeft = Math.ceil((payload.expired_at - todayMs()) / 86400000);
-      return {
-        ok: true,
-        message: `Lisensi berhasil diaktifkan! Berlaku untuk ${payload.nama_ra} (${daysLeft} hari tersisa).`,
-        nama_ra: payload.nama_ra,
-        days_left: daysLeft
-      };
-    } catch (e) {
-      return { ok: false, message: 'Kunci tidak valid (format salah). ' + e.message };
-    }
-  }
-
-  /**
-   * Returns list of all keys (history)
+   * Legacy local-key history is intentionally empty. Current licensing is
+   * account-based and verified by Supabase RPC; no offline secret is shipped
+   * to the browser.
    */
   function keyHistory() {
-    return (_getInfo() || {}).keys || [];
+    return [];
   }
 
   // Kompatibilitas dengan pola PKG/PKKM: sesi akun adalah sumber status
@@ -233,5 +143,5 @@ window.License = (function() {
     return info.account;
   }
 
-  return { init, status, activate, keyHistory, activateFromAccount, TRIAL_DAYS, WARN_DAYS };
+  return { init, status, keyHistory, activateFromAccount, TRIAL_DAYS, WARN_DAYS };
 })();

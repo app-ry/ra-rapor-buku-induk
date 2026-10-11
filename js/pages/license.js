@@ -42,7 +42,7 @@ window.Pages.license = {
       </div>
 
       <div class="text-muted small mt-3 text-center">
-        Butuh perpanjangan? Hubungi pengembang untuk mendapatkan kunci lisensi baru.
+        Butuh perpanjangan atau akun baru? Hubungi pengelola Pusat Lisensi.
       </div>
     `;
 
@@ -88,7 +88,7 @@ function _renderStatusCard(st) {
         <div class="small text-muted">Gratis selama ${License.TRIAL_DAYS} hari sejak pertama kali aplikasi dibuka</div>
         <div class="mt-2">Berakhir: <b>${_fmtDate(st.trial_end)}</b></div>
         <div class="mt-1">Sisa <b>${st.days_left}</b> hari</div>
-        <div class="mt-2 small text-warning"><i class="bi bi-exclamation-triangle"></i> Setelah masa uji coba habis, aplikasi akan terkunci. Aktifkan lisensi untuk melanjutkan.</div>
+        <div class="mt-2 small text-warning"><i class="bi bi-exclamation-triangle"></i> Setelah masa uji coba habis, login dengan akun Pusat Lisensi diperlukan untuk melanjutkan.</div>
       </div>`;
   } else if (st.state === 'grace') {
     body = `
@@ -102,7 +102,7 @@ function _renderStatusCard(st) {
       <div class="text-center py-2">
         <div class="fs-4 fw-bold text-danger mb-1">🔴 Lisensi Kadaluarsa</div>
         <div class="small text-muted">Masa uji coba telah berakhir dan belum ada lisensi aktif.</div>
-        <div class="mt-2">Aplikasi terkunci. Masukkan kunci lisensi untuk melanjutkan.</div>
+        <div class="mt-2">Aplikasi terkunci. Daftar atau masuk menggunakan akun Pusat Lisensi.</div>
       </div>`;
   }
 
@@ -139,45 +139,7 @@ function _fmtDate(ts) {
   return d.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
 }
 
-async function _bindEvents() {
-  const btn = document.getElementById('btnActivate');
-  if (!btn) return; // Aktivasi akun dilakukan dari halaman login.
-
-  btn.addEventListener('click', async () => {
-    const keyInput = document.getElementById('keyInput');
-    const alertEl = document.getElementById('licenseAlert');
-    const key = keyInput.value.trim();
-    if (!key) {
-      _showAlert('Masukkan kunci lisensi terlebih dahulu.', 'warning');
-      return;
-    }
-
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Memverifikasi...';
-
-    try {
-      const result = await License.activate(key);
-      if (result.ok) {
-        _showAlert(result.message, 'success');
-        keyInput.value = '';
-        // Reload page after 1.5s
-        setTimeout(() => App.go('license'), 1500);
-      } else {
-        _showAlert(result.message, 'danger');
-      }
-    } catch (e) {
-      _showAlert('Gagal memverifikasi kunci: ' + e.message, 'danger');
-    }
-    btn.disabled = false;
-    btn.innerHTML = '<i class="bi bi-check-circle"></i> Aktifkan Lisensi';
-  });
-}
-
-function _showAlert(msg, type) {
-  const el = document.getElementById('licenseAlert');
-  if (!el) return;
-  el.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show mb-3">
-    ${U.esc(msg)}
-    <button class="btn-close" data-bs-dismiss="alert"></button>
-  </div>`;
+function _bindEvents() {
+  // Aktivasi dilakukan saat pendaftaran akun melalui Pusat Lisensi.
+  // Halaman ini hanya menampilkan status akun yang sedang login.
 }

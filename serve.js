@@ -46,9 +46,7 @@ server.listen(PORT, () => {
   console.log(`\n  Aplikasi Rapor & Buku Induk RA berjalan di:`);
   console.log(`  http://localhost:${PORT}\n`);
   console.log(`  Demo akun:`);
-  console.log(`    admin / @riyant1970`);
-  console.log(`    kepala / kepala123`);
-  console.log(`    guru / guru123`);
-  console.log(`    operator / operator123\n`);
+  console.log('  Gunakan akun berbasis kode aktivasi untuk pengujian produksi.');
+  console.log('  Kredensial demo tidak ditampilkan oleh server.\n');
   console.log(`  Tekan Ctrl+C untuk berhenti.\n`);
 });

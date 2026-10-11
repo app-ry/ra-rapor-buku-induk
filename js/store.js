@@ -59,22 +59,21 @@ window.Store = (function() {
   function getObj(name, def) { return _read(name, def); }
   function setObj(name, val) { _write(name, val); }
 
-  // Migrasi auto: update password admin lama (admin123) ke @riyant1970
-  function migrateAdminPassword() {
+  // Hapus password plaintext hanya saat aplikasi sudah dikonfigurasi memakai
+  // Pusat Lisensi. Lingkungan pengembangan tanpa Supabase tetap kompatibel.
+  function migrateLegacyPasswords() {
     try {
       const arr = list('users');
       let changed = false;
       arr.forEach(u => {
-        if (u.username === 'admin' && u.password === 'admin123') {
-          u.password = '@riyant1970';
+        if (!u.remote_account && u.password) {
+          u.password = '';
           changed = true;
         }
       });
       if (changed) setList('users', arr);
     } catch (e) { /* ignore */ }
   }
-  // run migration on module load
-  if (typeof window !== 'undefined') migrateAdminPassword();
 
   // Session helpers
   function login(username, password) {
@@ -89,7 +88,11 @@ window.Store = (function() {
   function loginRemoteAccount(account, passwordHash) {
     const username = String(account.username || '').trim().toLowerCase();
     const arr = list('users');
-    const role = ['admin','kepala','guru','operator'].includes(account.role) ? account.role : 'operator';
+    // Satu akun pusat mewakili satu lembaga. RPC lama dapat mengembalikan
+    // role `user`; di aplikasi RA akun tersebut harus menjadi administrator
+    // lembaga agar dapat mengelola seluruh data lokal.
+    const role = ['admin','kepala','guru','operator'].includes(account.role)
+      ? account.role : 'admin';
     const user = {
       id: 'remote_' + String(account.id || username), username, password: '', passwordHash: passwordHash || '',
       role, nama: account.fullname || account.nama || username, madrasah: account.madrasah || '',
@@ -154,6 +157,7 @@ window.Store = (function() {
     login, loginRemoteAccount, logout, currentUser,
     activeTA, activeSem,
     log,
+    migrateLegacyPasswords,
     exportAll, importAll, resetAll
   };
 })();
