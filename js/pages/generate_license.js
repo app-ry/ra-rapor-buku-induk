@@ -1,4 +1,4 @@
-// pages/generate_license.js — Halaman terbitkan lisensi (admin only)
+// pages/generate_license.js — Halaman terbitkan kode lisensi (admin only)
 window.Pages.generate_license = {
   render: async function() {
     const root = document.getElementById('pageRoot');
@@ -8,7 +8,7 @@ window.Pages.generate_license = {
       <div class="page-header">
         <div>
           <h1><i class="bi bi-key-fill"></i> Terbitkan Lisensi</h1>
-          <div class="subtitle">Generate kunci lisensi untuk RA pengguna</div>
+          <div class="subtitle">Generate kode lisensi sederhana untuk RA pengguna</div>
         </div>
       </div>
 
@@ -19,35 +19,37 @@ window.Pages.generate_license = {
           <div class="panel">
             <div class="panel-head"><h5 class="panel-title"><i class="bi bi-pencil-square"></i> Form Generate</h5></div>
             <div class="mb-3">
+              <label class="form-label fw-semibold">Admin Key Pusat Lisensi <span class="text-danger">*</span></label>
+              <input type="password" class="form-control" id="genAdminKey" placeholder="Masukkan Admin Key" autocomplete="off" />
+            </div>
+            <div class="mb-3">
               <label class="form-label fw-semibold">Nama RA / Lembaga <span class="text-danger">*</span></label>
               <input type="text" class="form-control" id="genNamaRA" placeholder="contoh: RA Miftahul Jannah Sukowono" />
             </div>
             <div class="row g-2 mb-3">
               <div class="col-6">
-                <label class="form-label fw-semibold">Masa Berlaku</label>
+                <label class="form-label fw-semibold">Tipe Lisensi</label>
                 <select class="form-select" id="genTahun">
-                  <option value="1">1 Tahun</option>
-                  <option value="2">2 Tahun</option>
-                  <option value="3">3 Tahun</option>
+                  <option value="pro">Lisensi Pro</option>
                 </select>
               </div>
               <div class="col-6">
-                <label class="form-label fw-semibold">Mulai Tanggal</label>
-                <input type="date" class="form-control" id="genStartDate" value="${today}" />
+                <label class="form-label fw-semibold">Format Kode</label>
+                <input type="text" class="form-control" value="RA-XXXX-XXXX" readonly />
               </div>
             </div>
             <button class="btn btn-success w-100 fw-semibold" id="btnGenLicense">
-              <i class="bi bi-shield-check"></i> Generate Kunci Lisensi
+              <i class="bi bi-shield-check"></i> Generate Kode Lisensi
             </button>
 
             <div class="mt-3" id="genResult" style="display:none">
-              <label class="form-label fw-semibold">Kunci Lisensi</label>
-              <textarea class="form-control" id="genKeyOutput" rows="3" readonly style="font-family:monospace;font-size:11px"></textarea>
+              <label class="form-label fw-semibold">Kode Lisensi</label>
+              <input class="form-control fw-bold" id="genKeyOutput" readonly style="font-family:monospace;font-size:18px;letter-spacing:1px" />
               <button class="btn btn-outline-success btn-sm mt-2 w-100" id="btnCopyKey">
-                <i class="bi bi-clipboard"></i> Salin Kunci
+                <i class="bi bi-clipboard"></i> Salin Kode
               </button>
               <div class="small text-muted mt-2">
-                Kirim kunci ini ke pengguna. Pengguna buka menu <b>Lisensi</b> → tempel kunci → Aktifkan.
+                Kirim kode ini ke pengguna. Formatnya sederhana seperti <b>RA-XXXX-XXXX</b>. Pengguna memasukkannya saat daftar akun.
               </div>
             </div>
           </div>
@@ -122,12 +124,13 @@ function _renderHistory() {
   }
   if (btn) btn.disabled = false;
   el.innerHTML = hist.slice().reverse().map(h => {
+    if (h.code) return `<div class="d-flex justify-content-between align-items-start py-2 border-bottom small">
+      <div><b>${U.esc(h.nama_ra)}</b><br><code>${U.esc(h.code)}</code></div>
+      <span class="badge bg-success">TERDAFTAR</span>
+    </div>`;
     const expired = h.expired_at <= Date.now();
     return `<div class="d-flex justify-content-between align-items-start py-2 border-bottom small">
-      <div>
-        <b>${U.esc(h.nama_ra)}</b><br>
-        <span class="text-muted">${h.tahun} tahun · ${_genFmtDate(h.start)} s/d ${_genFmtDate(h.expired_at)}</span>
-      </div>
+      <div><b>${U.esc(h.nama_ra)}</b><br><span class="text-muted">Riwayat kode lokal lama</span></div>
       <span class="badge ${expired ? 'bg-secondary' : 'bg-success'}">${expired ? 'EXPIRED' : 'AKTIF'}</span>
     </div>`;
   }).join('');
@@ -152,43 +155,41 @@ function _bindEvents() {
   if (!btn) return;
 
   btn.addEventListener('click', async () => {
+    const adminKey = document.getElementById('genAdminKey').value.trim();
     const namaRA = document.getElementById('genNamaRA').value.trim();
-    const tahun = parseInt(document.getElementById('genTahun').value);
-    const startStr = document.getElementById('genStartDate').value;
+    const tipe = document.getElementById('genTahun').value;
 
+    if (!adminKey) { _genShowAlert('Admin Key Pusat Lisensi wajib diisi.', 'warning'); return; }
     if (!namaRA) { _genShowAlert('Nama RA / Lembaga wajib diisi.', 'warning'); return; }
-    if (!startStr) { _genShowAlert('Tanggal mulai wajib diisi.', 'warning'); return; }
 
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Generating...';
 
     try {
-      const startMs = _genDateMs(startStr);
-      const expDate = new Date(startStr);
-      expDate.setFullYear(expDate.getFullYear() + tahun);
-      const expiredAt = _genDateMs(expDate.toISOString().slice(0, 10));
+      if (!window.SupabaseSync || typeof SupabaseSync.adminRegisterCode !== 'function') {
+        throw new Error('Koneksi Pusat Lisensi belum tersedia.');
+      }
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      const part = () => Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+      const key = `RA-${part()}-${part()}`;
+      const result = await SupabaseSync.adminRegisterCode(adminKey, key, namaRA);
+      if (!result || result.success !== true) {
+        throw new Error(result && result.reason === 'invalid_admin_key' ? 'Admin Key tidak valid.' : 'Kode gagal didaftarkan ke Pusat Lisensi.');
+      }
 
-      const dataToSign = `v=1|ra=${namaRA}|exp=${expiredAt}`;
-      const secret = _genDecodeSecret();
-      const sig = await _genHmacSign(secret, dataToSign);
-
-      const payload = { v: 1, nama_ra: namaRA, expired_at: expiredAt, sig };
-      const key = btoa(JSON.stringify(payload));
-
-      keyOutput.value = key;
+      keyOutput.value = result.code || key;
       resultDiv.style.display = 'block';
-      _genShowAlert('Kunci lisensi berhasil dibuat!', 'success');
+      _genShowAlert('Kode lisensi berhasil dibuat dan didaftarkan!', 'success');
 
-      // Save history
       const hist = _genLoadHistory();
-      hist.push({ nama_ra: namaRA, tahun, start: startMs, expired_at: expiredAt, sig: sig.slice(0, 8) + '...' });
+      hist.push({ nama_ra: namaRA, tipe, start: Date.now(), code: result.code || key });
       _genSaveHistory(hist);
       _renderHistory();
     } catch (e) {
       _genShowAlert('Gagal generate kunci: ' + e.message, 'danger');
     }
     btn.disabled = false;
-    btn.innerHTML = '<i class="bi bi-shield-check"></i> Generate Kunci Lisensi';
+    btn.innerHTML = '<i class="bi bi-shield-check"></i> Generate Kode Lisensi';
   });
 
   if (btnCopy) {
@@ -197,7 +198,7 @@ function _bindEvents() {
       if (!text) return;
       navigator.clipboard.writeText(text).then(() => {
         btnCopy.innerHTML = '<i class="bi bi-check-lg"></i> Tersalin!';
-        setTimeout(() => { btnCopy.innerHTML = '<i class="bi bi-clipboard"></i> Salin Kunci'; }, 2000);
+        setTimeout(() => { btnCopy.innerHTML = '<i class="bi bi-clipboard"></i> Salin Kode'; }, 2000);
       }).catch(() => { _genShowAlert('Gagal menyalin. Copy manual saja.', 'warning'); });
     });
   }

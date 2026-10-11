@@ -59,6 +59,17 @@
   window.SupabaseSync = {
     APP_SLUG: APP_SLUG,
     hashPassword: hashPassword,
+    adminRegisterCode: function (adminKey, code, recipient) {
+      return safeCall('admin_register_code', {
+        p_admin_key: String(adminKey || ''),
+        p_code: String(code || '').trim().toUpperCase(),
+        p_app_slug: APP_SLUG,
+        p_tier: 'pro',
+        p_recipient: recipient || '',
+        p_app_name: 'Rapor & Buku Induk RA',
+        p_max_devices: 1
+      }, { success: null, reason: 'network_error' });
+    },
     registerAccount: function (code, username, password, fullname, madrasah) {
       return hashPassword(username, password).then(function (passwordHash) {
         return safeCall('register_account', {
