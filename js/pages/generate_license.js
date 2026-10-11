@@ -51,39 +51,47 @@
 
   function renderPanel(root) {
     root.innerHTML = '<div class="container-fluid py-3"><div class="d-flex justify-content-between align-items-center mb-3">' +
-      '<div><h1><i class="bi bi-key-fill"></i> Terbitkan Lisensi</h1><div class="subtitle">Panel Admin Pusat — buat kode aktivasi untuk RA</div></div>' +
-      '<button id="btnGenAdminLogout" class="btn btn-outline-secondary btn-sm">Keluar Panel</button></div>' +
-      '<div id="genAlert"></div><div class="row g-3"><div class="col-lg-7"><div class="card shadow-sm"><div class="card-body">' +
-      '<label class="form-label fw-semibold">Nama RA / Lembaga</label><input id="genNamaRA" class="form-control mb-3" placeholder="Contoh: RA Miftahul Jannah">' +
-      '<label class="form-label fw-semibold">Format Kode</label><input class="form-control mb-3" value="RA-XXXX-XXXX" readonly>' +
-      '<button id="btnGenCode" class="btn btn-success"><i class="bi bi-shield-check"></i> Generate Kode Lisensi</button>' +
-      '<div id="genResult" class="mt-3" style="display:none"><label class="form-label fw-semibold">Kode Aktivasi</label><div class="input-group"><input id="genKeyOutput" class="form-control fw-bold" readonly style="font-family:monospace;font-size:18px;letter-spacing:1px"><button id="btnCopyCode" class="btn btn-outline-secondary">Salin</button></div><div class="small text-muted mt-2">Berikan kode ini kepada lembaga. Kode dipakai saat pendaftaran akun.</div></div>' +
-      '</div></div><div class="col-lg-5"><div class="card shadow-sm"><div class="card-body"><h5>Riwayat Generate</h5><div id="genHistory" class="small text-muted">Belum ada kode pada sesi ini.</div><button id="btnClearHistory" class="btn btn-outline-secondary btn-sm mt-3">Hapus Riwayat</button></div></div></div></div>' +
-      '<div class="alert alert-warning mt-3 small"><i class="bi bi-exclamation-triangle"></i> Jangan membagikan Admin Key. Yang dibagikan kepada pengguna hanya kode RA-XXXX-XXXX.</div></div>';
+      '<div><h1><i class="bi bi-key-fill"></i> Kelola Kode Aktivasi & Akun</h1><div class="subtitle">Pusat Lisensi Rapor & Buku Induk RA</div></div>' +
+      '<button id="btnGenAdminLogout" class="btn btn-outline-secondary btn-sm">Keluar Panel</button></div><div id="genAlert"></div>' +
+      '<div class="row g-3 mb-3"><div class="col-md-3"><div class="card shadow-sm border-0"><div class="card-body"><div class="text-muted small">Total Kode</div><div id="statTotal" class="fs-3 fw-bold">-</div></div></div></div>' +
+      '<div class="col-md-3"><div class="card shadow-sm border-0"><div class="card-body"><div class="text-muted small">Belum Dipakai</div><div id="statUnused" class="fs-3 fw-bold text-success">-</div></div></div></div>' +
+      '<div class="col-md-3"><div class="card shadow-sm border-0"><div class="card-body"><div class="text-muted small">Akun Terdaftar</div><div id="statAccounts" class="fs-3 fw-bold text-primary">-</div></div></div></div>' +
+      '<div class="col-md-3"><div class="card shadow-sm border-0"><div class="card-body"><div class="text-muted small">Dicabut</div><div id="statRevoked" class="fs-3 fw-bold text-danger">-</div></div></div></div></div>' +
+      '<div class="card shadow-sm"><div class="card-body"><div class="d-flex flex-wrap gap-2 align-items-center mb-3"><span class="fw-semibold me-2">Buat:</span><button class="btn btn-success btn-sm create-count" data-count="1">1 Kode</button><button class="btn btn-success btn-sm create-count" data-count="5">5 Kode</button><button class="btn btn-success btn-sm create-count" data-count="10">10 Kode</button><input id="genRecipient" class="form-control form-control-sm" style="max-width:260px" placeholder="Penerima / catatan (opsional)"><button id="btnReloadCodes" class="btn btn-outline-secondary btn-sm">↻ Muat Ulang</button></div>' +
+      '<div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th>Kode Aktivasi</th><th>Penerima</th><th>Dibuat</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="codesBody"><tr><td colspan="5" class="text-center text-muted">Memuat...</td></tr></tbody></table></div></div></div>' +
+      '<div class="alert alert-warning mt-3 small"><i class="bi bi-exclamation-triangle"></i> Jangan membagikan Admin Key. Pengguna hanya menerima kode aktivasi.</div></div>';
     bindPanel();
   }
 
   function bindPanel() {
-    var historyKey = 'ra_license_generated_history';
-    var history = JSON.parse(sessionStorage.getItem(historyKey) || '[]');
-    var historyEl = document.getElementById('genHistory');
-    function draw() { historyEl.innerHTML = history.length ? history.slice().reverse().map(function (h) { return '<div class="border-bottom py-2"><b>' + esc(h.nama) + '</b><br><code>' + esc(h.code) + '</code></div>'; }).join('') : 'Belum ada kode pada sesi ini.'; }
-    draw();
+    var codes = [];
+    function date(v) { return v ? new Date(v).toLocaleDateString('id-ID') : '-'; }
+    function draw() {
+      var body = document.getElementById('codesBody');
+      var unused = codes.filter(function (c) { return !c.used_count && c.is_active !== false; }).length;
+      document.getElementById('statTotal').textContent = codes.length;
+      document.getElementById('statUnused').textContent = unused;
+      document.getElementById('statAccounts').textContent = codes.reduce(function (n, c) { return n + Number(c.used_count || 0); }, 0);
+      document.getElementById('statRevoked').textContent = codes.filter(function (c) { return c.is_active === false; }).length;
+      body.innerHTML = codes.length ? codes.map(function (c, i) {
+        var active = c.is_active !== false, used = Number(c.used_count || 0) > 0;
+        return '<tr><td><code>' + esc(c.code) + '</code></td><td>' + esc(c.recipient || '-') + '</td><td>' + date(c.created_at) + '</td><td><span class="badge ' + (!active ? 'bg-danger' : used ? 'bg-success' : 'bg-secondary') + '">' + (!active ? 'Dicabut' : used ? 'Terpakai' : 'Belum Dipakai') + '</span></td><td><button class="btn btn-sm btn-outline-secondary copy-code" data-code="' + esc(c.code) + '"><i class="bi bi-clipboard"></i></button></td></tr>';
+      }).join('') : '<tr><td colspan="5" class="text-center text-muted py-4">Belum ada kode.</td></tr>';
+      body.querySelectorAll('.copy-code').forEach(function (b) { b.onclick = function () { navigator.clipboard.writeText(b.dataset.code); b.innerHTML = '✓'; }; });
+    }
+    async function reload() {
+      var r = await SupabaseSync.adminListCodes(key());
+      codes = r && Array.isArray(r.codes) ? r.codes : (Array.isArray(r) ? r : []); draw();
+    }
     document.getElementById('btnGenAdminLogout').onclick = function () { sessionStorage.removeItem(STORAGE); location.hash = '#/license'; };
-    document.getElementById('btnClearHistory').onclick = function () { history = []; sessionStorage.removeItem(historyKey); draw(); };
-    document.getElementById('btnGenCode').onclick = async function () {
-      var nama = document.getElementById('genNamaRA').value.trim();
-      if (!nama) { alertBox('Nama RA / Lembaga wajib diisi.', 'warning'); return; }
-      var btn = document.getElementById('btnGenCode'); btn.disabled = true; btn.textContent = 'Mendaftarkan...';
-      var code = makeCode();
-      var result = await SupabaseSync.adminRegisterCode(key(), code, nama);
-      btn.disabled = false; btn.innerHTML = '<i class="bi bi-shield-check"></i> Generate Kode Lisensi';
-      if (!result || result.success !== true) { alertBox(result && result.reason === 'invalid_admin_key' ? 'Admin Key salah.' : 'Kode gagal didaftarkan ke Pusat Lisensi.', 'danger'); return; }
-      document.getElementById('genKeyOutput').value = result.code || code;
-      document.getElementById('genResult').style.display = '';
-      history.push({ nama: nama, code: result.code || code }); sessionStorage.setItem(historyKey, JSON.stringify(history)); draw();
-      alertBox('Kode berhasil dibuat dan didaftarkan.', 'success');
-    };
-    document.getElementById('btnCopyCode').onclick = function () { navigator.clipboard.writeText(document.getElementById('genKeyOutput').value); this.textContent = 'Tersalin'; };
+    document.getElementById('btnReloadCodes').onclick = reload;
+    document.querySelectorAll('.create-count').forEach(function (btn) { btn.onclick = async function () {
+      var count = Number(btn.dataset.count), recipient = document.getElementById('genRecipient').value.trim();
+      btn.disabled = true; btn.textContent = 'Membuat...';
+      var jobs = Array.from({ length: count }, function () { var code = makeCode(); return SupabaseSync.adminRegisterCode(key(), code, recipient).then(function (r) { return r && r.success === true; }); });
+      var ok = (await Promise.all(jobs)).filter(Boolean).length; btn.disabled = false; btn.textContent = count + ' Kode';
+      alertBox(ok + ' kode berhasil dibuat.', ok ? 'success' : 'danger'); await reload();
+    }; });
+    reload();
   }
 })();

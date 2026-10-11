@@ -65,6 +65,18 @@
         p_app_slug: APP_SLUG
       }, { success: null, reason: 'network_error' });
     },
+    adminListCodes: function (adminKey) {
+      return safeCall('admin_list_codes', {
+        p_admin_key: String(adminKey || ''),
+        p_app_slug: APP_SLUG
+      }, { success: null, codes: [] });
+    },
+    adminBatchCreateCodes: function (adminKey, count, recipient) {
+      return safeCall('admin_batch_create_codes', {
+        p_admin_key: String(adminKey || ''), p_count: Number(count || 1),
+        p_app_slug: APP_SLUG, p_recipient: recipient || ''
+      }, { success: null, codes: [] });
+    },
     adminRegisterCode: function (adminKey, code, recipient) {
       return safeCall('admin_register_code', {
         p_admin_key: String(adminKey || ''),
