@@ -174,6 +174,11 @@ window.App = (function() {
     const r = ROUTES.find(x => x.path === path);
     const root = document.getElementById('pageRoot');
     if (!r) {
+      // Rute generator lama sudah dihapus; arahkan URL/hash lama ke Lisensi.
+      if (path === 'terbitkan-lisensi') {
+        location.hash = '#/license';
+        return;
+      }
       root.innerHTML = `<div class="empty"><i class="bi bi-question-circle"></i><div>Halaman tidak ditemukan</div></div>`;
       return;
     }
