@@ -57,7 +57,7 @@
       '<div class="col-md-3"><div class="card shadow-sm border-0"><div class="card-body"><div class="text-muted small">Belum Dipakai</div><div id="statUnused" class="fs-3 fw-bold text-success">-</div></div></div></div>' +
       '<div class="col-md-3"><div class="card shadow-sm border-0"><div class="card-body"><div class="text-muted small">Akun Terdaftar</div><div id="statAccounts" class="fs-3 fw-bold text-primary">-</div></div></div></div>' +
       '<div class="col-md-3"><div class="card shadow-sm border-0"><div class="card-body"><div class="text-muted small">Dicabut</div><div id="statRevoked" class="fs-3 fw-bold text-danger">-</div></div></div></div></div>' +
-      '<div class="card shadow-sm"><div class="card-body"><div class="d-flex flex-wrap gap-2 align-items-center mb-3"><span class="fw-semibold me-2">Buat:</span><button class="btn btn-success btn-sm create-count" data-count="1">1 Kode</button><button class="btn btn-success btn-sm create-count" data-count="5">5 Kode</button><button class="btn btn-success btn-sm create-count" data-count="10">10 Kode</button><button id="btnCustomCode" class="btn btn-outline-success btn-sm"><i class="bi bi-pencil-square"></i> Custom</button><input id="genRecipient" class="form-control form-control-sm" style="max-width:260px" placeholder="Penerima / catatan (opsional)"><button id="btnReloadCodes" class="btn btn-outline-secondary btn-sm">↻ Muat Ulang</button></div>' +
+      '<div class="card shadow-sm"><div class="card-body"><div class="d-flex flex-wrap gap-2 align-items-center mb-3"><span class="fw-semibold me-2">Buat:</span><button class="btn btn-success btn-sm create-count" data-count="1">1 Kode</button><button class="btn btn-success btn-sm create-count" data-count="5">5 Kode</button><button class="btn btn-success btn-sm create-count" data-count="10">10 Kode</button><button id="btnCustomCode" class="btn btn-outline-success btn-sm"><i class="bi bi-pencil-square"></i> Custom Jumlah</button><input id="genRecipient" class="form-control form-control-sm" style="max-width:260px" placeholder="Penerima / catatan (opsional)"><button id="btnReloadCodes" class="btn btn-outline-secondary btn-sm">↻ Muat Ulang</button></div>' +
       '<div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th>Kode Aktivasi</th><th>Penerima</th><th>Dibuat</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="codesBody"><tr><td colspan="5" class="text-center text-muted">Memuat...</td></tr></tbody></table></div></div></div>' +
       '<div class="alert alert-warning mt-3 small"><i class="bi bi-exclamation-triangle"></i> Jangan membagikan Admin Key. Pengguna hanya menerima kode aktivasi.</div></div>';
     bindPanel();
@@ -86,19 +86,22 @@
     document.getElementById('btnGenAdminLogout').onclick = function () { sessionStorage.removeItem(STORAGE); location.hash = '#/license'; };
     document.getElementById('btnReloadCodes').onclick = reload;
     document.getElementById('btnCustomCode').onclick = async function () {
-      var raw = window.prompt('Masukkan kode sesuai keinginan (contoh: RA-MIFTAH-2026):', 'RA-');
+      var raw = window.prompt('Berapa kode yang ingin diterbitkan? (contoh: 11 atau 17)', '11');
       if (raw === null) return;
-      var code = raw.trim().toUpperCase().replace(/\\s+/g, '');
-      if (!/^[A-Z0-9][A-Z0-9-]{3,49}$/.test(code) || code.indexOf('-') < 0) {
-        alertBox('Format kode tidak valid. Gunakan minimal 4 karakter, tanpa spasi, dan sertakan tanda hubung.', 'warning'); return;
+      var count = Number(raw.trim());
+      if (!Number.isInteger(count) || count < 1 || count > 100) {
+        alertBox('Jumlah harus berupa bilangan bulat antara 1 sampai 100.', 'warning'); return;
       }
       var recipient = document.getElementById('genRecipient').value.trim();
-      var btn = document.getElementById('btnCustomCode'); btn.disabled = true;
-      var result = await SupabaseSync.adminRegisterCode(key(), code, recipient);
-      btn.disabled = false;
-      if (result && result.success === true) { alertBox('Kode custom berhasil didaftarkan: ' + (result.code || code), 'success'); await reload(); }
-      else if (result && result.reason === 'already_exists') alertBox('Kode tersebut sudah terdaftar.', 'warning');
-      else alertBox(result && result.reason === 'invalid_admin_key' ? 'Admin Key salah.' : 'Kode custom gagal didaftarkan.', 'danger');
+      var btn = document.getElementById('btnCustomCode'); btn.disabled = true; btn.textContent = 'Membuat...';
+      var jobs = Array.from({ length: count }, function () {
+        var code = makeCode();
+        return SupabaseSync.adminRegisterCode(key(), code, recipient).then(function (r) { return r && r.success === true; });
+      });
+      var ok = (await Promise.all(jobs)).filter(Boolean).length;
+      btn.disabled = false; btn.innerHTML = '<i class="bi bi-pencil-square"></i> Custom Jumlah';
+      alertBox(ok + ' dari ' + count + ' kode berhasil dibuat.', ok === count ? 'success' : ok ? 'warning' : 'danger');
+      await reload();
     };
     document.querySelectorAll('.create-count').forEach(function (btn) { btn.onclick = async function () {
       var count = Number(btn.dataset.count), recipient = document.getElementById('genRecipient').value.trim();
