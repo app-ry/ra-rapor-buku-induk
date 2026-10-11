@@ -16,7 +16,8 @@ window.App = (function() {
     { path:'rekap', icon:'bi-bar-chart', label:'Rekap Perkembangan', render:()=>Pages.rekap.render(), roles:['admin','kepala','guru'] },
     { path:'pengguna', icon:'bi-people', label:'Pengaturan Pengguna', render:()=>Pages.pengguna.render(), roles:['admin'] },
     { path:'backup', icon:'bi-cloud-arrow-down', label:'Backup Data', render:()=>Pages.backup.render(), roles:['admin'] },
-    { path:'license', icon:'bi-shield-lock', label:'Lisensi', render:()=>Pages.license.render(), roles:['admin'] }
+    { path:'license', icon:'bi-shield-lock', label:'Lisensi', render:()=>Pages.license.render(), roles:['admin'] },
+    { path:'terbitkan-lisensi', icon:'bi-key-fill', label:'Terbitkan Lisensi', render:()=>Pages.generate_license.render(), roles:['admin'] }
   ];
 
   // Pages namespace

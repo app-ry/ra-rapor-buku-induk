@@ -59,6 +59,12 @@
   window.SupabaseSync = {
     APP_SLUG: APP_SLUG,
     hashPassword: hashPassword,
+    adminGetStats: function (adminKey) {
+      return safeCall('admin_get_stats', {
+        p_admin_key: String(adminKey || ''),
+        p_app_slug: APP_SLUG
+      }, { success: null, reason: 'network_error' });
+    },
     adminRegisterCode: function (adminKey, code, recipient) {
       return safeCall('admin_register_code', {
         p_admin_key: String(adminKey || ''),
