@@ -82,6 +82,17 @@ window.License = (function() {
    *   expired — no valid license, trial over, grace over
    */
   function status() {
+    // Akun Pusat Lisensi berlaku lintas perangkat/browser. Status ini hanya
+    // menyimpan cache identitas; verifikasi kredensial dilakukan saat login.
+    const remoteUser = typeof Store !== 'undefined' && Store.currentUser ? Store.currentUser() : null;
+    if (remoteUser && remoteUser.remote_account && remoteUser.license_tier) {
+      return {
+        state: 'active', reason: 'account_licensed', is_account: true,
+        nama_ra: remoteUser.madrasah || remoteUser.nama || remoteUser.username,
+        username: remoteUser.username, license_code: remoteUser.license_code || null,
+        days_left: null, warn: false
+      };
+    }
     const info = _getInfo();
     if (!info) return { state: 'expired', reason: 'no_init' };
 
@@ -199,5 +210,19 @@ window.License = (function() {
     return (_getInfo() || {}).keys || [];
   }
 
-  return { init, status, activate, keyHistory, TRIAL_DAYS, WARN_DAYS };
+  // Kompatibilitas dengan pola PKG/PKKM: sesi akun adalah sumber status
+  // lisensi, sedangkan data rapor tetap tidak pernah dikirim ke server.
+  function activateFromAccount(account) {
+    const info = _getInfo() || { trial_start: todayMs(), keys: [] };
+    info.account = {
+      username: account.username || '',
+      license_code: account.licenseCode || '',
+      nama_ra: account.madrasah || account.fullname || '',
+      activated_at: new Date().toISOString()
+    };
+    _setInfo(info);
+    return info.account;
+  }
+
+  return { init, status, activate, keyHistory, activateFromAccount, TRIAL_DAYS, WARN_DAYS };
 })();

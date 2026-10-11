@@ -84,6 +84,24 @@ window.Store = (function() {
     setObj('session', sess);
     return u;
   }
+  // Cache identitas akun yang telah diautentikasi Pusat Lisensi.
+  // Data siswa/rapor tetap lokal; hanya akun dan sesi yang dicache.
+  function loginRemoteAccount(account, passwordHash) {
+    const username = String(account.username || '').trim().toLowerCase();
+    const arr = list('users');
+    const role = ['admin','kepala','guru','operator'].includes(account.role) ? account.role : 'operator';
+    const user = {
+      id: 'remote_' + String(account.id || username), username, password: '', passwordHash: passwordHash || '',
+      role, nama: account.fullname || account.nama || username, madrasah: account.madrasah || '',
+      remote_account: true, license_code: account.license_code || account.activation_code || '', license_tier: account.tier || 'full'
+    };
+    const i = arr.findIndex(x => x.remote_account && x.username === username);
+    if (i >= 0) arr[i] = Object.assign({}, arr[i], user); else arr.push(user);
+    setList('users', arr);
+    setObj('session', { user_id: user.id, login_at: Date.now(), remote: true });
+    return user;
+  }
+
   function logout() { localStorage.removeItem(_k('session')); }
   function currentUser() {
     const s = getObj('session', null);
@@ -133,7 +151,7 @@ window.Store = (function() {
     PREFIX, KEYS,
     list, setList, findById, add, update, remove, upsertBy,
     getObj, setObj,
-    login, logout, currentUser,
+    login, loginRemoteAccount, logout, currentUser,
     activeTA, activeSem,
     log,
     exportAll, importAll, resetAll

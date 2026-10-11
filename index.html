@@ -33,6 +33,21 @@
       </div>
       <button class="btn btn-success w-100 fw-semibold" type="submit">Masuk</button>
     </form>
+    <div class="text-center mt-3">
+      <button type="button" class="btn btn-link btn-sm" id="btnShowRegister">Daftar akun dengan kode aktivasi</button>
+    </div>
+    <form id="registerForm" class="d-none mt-3">
+      <hr />
+      <div class="fw-semibold mb-2">Daftar Akun Lembaga</div>
+      <div class="mb-2"><input type="text" class="form-control" id="registerFullname" placeholder="Nama lengkap" required /></div>
+      <div class="mb-2"><input type="text" class="form-control" id="registerMadrasah" placeholder="Nama RA/lembaga" required /></div>
+      <div class="mb-2"><input type="text" class="form-control" id="registerUsername" placeholder="Username (minimal 4 karakter)" required autocomplete="username" /></div>
+      <div class="mb-2"><input type="password" class="form-control" id="registerPassword" placeholder="Password (minimal 6 karakter)" required autocomplete="new-password" /></div>
+      <div class="mb-2"><input type="text" class="form-control text-uppercase" id="registerCode" placeholder="Kode aktivasi" required /></div>
+      <button class="btn btn-outline-success w-100 fw-semibold" type="submit">Daftar & Aktifkan</button>
+      <button type="button" class="btn btn-link btn-sm w-100" id="btnHideRegister">Kembali ke login</button>
+    </form>
+    <div id="loginAlert" class="small mt-3"></div>
   </div>
 </div>
 
@@ -78,6 +93,7 @@
 <script src="js/seed.js"></script>
 <script src="js/narasi.js"></script>
 <script src="js/excel.js"></script>
+<script src="js/supabase_sync.js"></script>
 <script src="js/license.js"></script>
 <script src="js/pages/dashboard.js"></script>
 <script src="js/pages/profil.js"></script>

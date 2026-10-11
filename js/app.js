@@ -40,18 +40,71 @@ window.App = (function() {
     document.getElementById('loginScreen').classList.remove('d-none');
     document.getElementById('appShell').classList.add('d-none');
     const f = document.getElementById('loginForm');
-    f.onsubmit = (e) => {
+    const registerForm = document.getElementById('registerForm');
+    const alertEl = document.getElementById('loginAlert');
+    const showAlert = (msg) => { if (alertEl) alertEl.innerHTML = `<div class="text-danger">${U.esc(msg)}</div>`; };
+    document.getElementById('btnShowRegister').onclick = () => {
+      document.getElementById('loginForm').classList.add('d-none');
+      registerForm.classList.remove('d-none');
+      alertEl.innerHTML = '';
+    };
+    document.getElementById('btnHideRegister').onclick = () => {
+      registerForm.classList.add('d-none');
+      document.getElementById('loginForm').classList.remove('d-none');
+      alertEl.innerHTML = '';
+    };
+    f.onsubmit = async (e) => {
       e.preventDefault();
       const u = document.getElementById('loginUsername').value.trim();
       const p = document.getElementById('loginPassword').value;
-      const user = Store.login(u, p);
+      let user = null;
+      if (window.SupabaseSync && SupabaseSync.isConfigured()) {
+        const remote = await SupabaseSync.loginAccount(u, p);
+        if (remote.result && remote.result.valid === true) {
+          user = Store.loginRemoteAccount(remote.result, remote.passwordHash);
+        } else if (remote.result && remote.result.valid === false && remote.result.reason !== 'network_error') {
+          // Admin lokal lama tetap boleh masuk untuk mengelola aplikasi saat
+          // akun admin pusat belum dimigrasikan atau lisensi server expired.
+          const localCandidate = Store.list('users').find(x => x.username === u && x.role === 'admin');
+          user = localCandidate ? Store.login(u, p) : null;
+          if (!user) { showAlert(_remoteReason(remote.result.reason)); return; }
+        }
+      }
+      if (!user) user = Store.login(u, p);
       if (!user) {
-        U.toast('Username atau password salah', 'danger');
+        showAlert('Username atau password salah, atau koneksi ke Pusat Lisensi sedang tidak tersedia.');
         return;
       }
       Store.log('login', user.id);
       showApp(user);
     };
+    registerForm.onsubmit = async (e) => {
+      e.preventDefault();
+      const btn = registerForm.querySelector('button[type="submit"]');
+      btn.disabled = true; btn.textContent = 'Memproses...';
+      try {
+        if (!window.SupabaseSync || !SupabaseSync.isConfigured()) throw new Error('Pusat Lisensi belum dikonfigurasi.');
+        const r = await SupabaseSync.registerAccount(
+          document.getElementById('registerCode').value,
+          document.getElementById('registerUsername').value,
+          document.getElementById('registerPassword').value,
+          document.getElementById('registerFullname').value,
+          document.getElementById('registerMadrasah').value
+        );
+        if (!r.result || r.result.success !== true) throw new Error(_remoteReason((r.result || {}).reason));
+        const login = await SupabaseSync.loginAccount(document.getElementById('registerUsername').value, document.getElementById('registerPassword').value);
+        if (!login.result || login.result.valid !== true) throw new Error('Akun berhasil dibuat, tetapi login awal gagal. Silakan login kembali.');
+        const user = Store.loginRemoteAccount(login.result, login.passwordHash);
+        Store.log('register_remote', user.id);
+        showApp(user);
+      } catch (err) { showAlert(err.message || 'Pendaftaran gagal.'); }
+      btn.disabled = false; btn.textContent = 'Daftar & Aktifkan';
+    };
+  }
+
+  function _remoteReason(reason) {
+    const map = { code_used:'Kode aktivasi sudah dipakai akun lain.', account_exists:'Username sudah dipakai.', invalid_code:'Kode aktivasi tidak valid.', inactive:'Kode aktivasi tidak aktif.', username_invalid:'Username minimal 4 karakter.', password_invalid:'Password tidak valid.', revoked:'Akun dinonaktifkan oleh admin.', invalid_credentials:'Username atau password salah.', network_error:'Gagal terhubung ke Pusat Lisensi.' };
+    return map[reason] || 'Proses akun gagal. Silakan coba lagi.';
   }
 
   function showApp(user) {

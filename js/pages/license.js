@@ -22,15 +22,12 @@ window.Pages.license = {
 
         <div class="col-md-6">
           <div class="panel">
-            <div class="panel-head"><h5 class="panel-title"><i class="bi bi-key"></i> Aktivasi Kunci</h5></div>
-            <div class="mb-3">
-              <label class="form-label fw-semibold">Kunci Lisensi</label>
-              <textarea class="form-control" id="keyInput" rows="3" placeholder="Tempel kunci lisensi di sini..." style="font-family:monospace;font-size:12px"></textarea>
-              <div class="form-text">Kunci didapat dari admin/pengembang. Satu kunci berlaku 1 tahun untuk satu RA.</div>
+            <div class="panel-head"><h5 class="panel-title"><i class="bi bi-person-check"></i> Lisensi Berbasis Akun</h5></div>
+            <div class="small text-muted mb-3">Kode aktivasi terikat pada satu akun lembaga dan dapat digunakan dari perangkat/browser berbeda.</div>
+            <div class="alert alert-info small mb-0">
+              Untuk akun baru, keluar ke halaman login lalu pilih <b>Daftar akun dengan kode aktivasi</b>.<br />
+              Data siswa, rapor, dan buku induk tetap tersimpan lokal di perangkat ini.
             </div>
-            <button class="btn btn-success w-100 fw-semibold" id="btnActivate">
-              <i class="bi bi-check-circle"></i> Aktifkan Lisensi
-            </button>
           </div>
         </div>
       </div>
@@ -82,9 +79,7 @@ function _renderStatusCard(st) {
       <div class="text-center py-2">
         <div class="fs-4 fw-bold text-success mb-1">🟢 Lisensi Aktif</div>
         <div class="mb-2"><b>${U.esc(st.nama_ra || '-')}</b></div>
-        <div class="small text-muted">Berlaku sampai</div>
-        <div class="fw-semibold">${_fmtDate(st.expired_at)}</div>
-        <div class="mt-1">Sisa <b>${st.days_left}</b> hari</div>
+        ${st.is_account ? `<div class="small text-muted">Akun lembaga</div><div class="fw-semibold">${U.esc(st.username || '-')}</div><div class="mt-2 small text-success">Aktif lintas perangkat/browser</div>` : `<div class="small text-muted">Berlaku sampai</div><div class="fw-semibold">${_fmtDate(st.expired_at)}</div><div class="mt-1">Sisa <b>${st.days_left}</b> hari</div>`}
       </div>`;
   } else if (st.state === 'trial') {
     body = `
@@ -146,7 +141,7 @@ function _fmtDate(ts) {
 
 async function _bindEvents() {
   const btn = document.getElementById('btnActivate');
-  if (!btn) return;
+  if (!btn) return; // Aktivasi akun dilakukan dari halaman login.
 
   btn.addEventListener('click', async () => {
     const keyInput = document.getElementById('keyInput');
