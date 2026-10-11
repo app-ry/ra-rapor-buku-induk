@@ -115,7 +115,8 @@ function _renderStatusCard(st) {
 }
 
 function _renderHistory() {
-  const keys = License.keyHistory();
+  // Be tolerant of an empty/migrated license record or an older cached script.
+  const keys = (typeof License.keyHistory === 'function' ? License.keyHistory() : []) || [];
   if (keys.length === 0) {
     return `<div class="text-muted small p-2">Belum ada riwayat aktivasi.</div>`;
   }

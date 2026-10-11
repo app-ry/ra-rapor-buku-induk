@@ -100,8 +100,9 @@ window.App = (function() {
     if (!user) { showLogin(); return; }
 
     const ls = License.status();
-    // Expired: only license page accessible
-    if (ls.state === 'expired') {
+    // Expired: regular users are redirected to license page.
+    // Admin must retain access so they can generate/activate a license.
+    if (ls.state === 'expired' && user.role !== 'admin') {
       const hash = location.hash.replace(/^#\/?/, '') || 'dashboard';
       if (hash.split('/')[0] !== 'license') {
         location.hash = '#/license';
