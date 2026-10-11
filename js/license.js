@@ -93,6 +93,15 @@ window.License = (function() {
         days_left: null, warn: false
       };
     }
+    // Admin lokal tetap memiliki akses pengelolaan saat lisensi pengguna
+    // belum dimigrasikan/expired. Jangan tampilkan admin sebagai trial.
+    if (remoteUser && remoteUser.role === 'admin') {
+      return {
+        state: 'active', reason: 'admin_access', is_admin: true,
+        nama_ra: remoteUser.madrasah || remoteUser.nama || 'Administrator',
+        username: remoteUser.username, days_left: null, warn: false
+      };
+    }
     const info = _getInfo();
     if (!info) return { state: 'expired', reason: 'no_init' };
 
