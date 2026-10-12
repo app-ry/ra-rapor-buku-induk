@@ -7,6 +7,9 @@
   // Publishable/anon key memang aman berada di frontend; jangan pernah memasukkan service_role key.
   var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxsYXVrenN6dGd1d3J0d2R1YnBtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxOTI1NDgsImV4cCI6MjEwMjc2ODU0OH0.DqKtA0aus9nOLViMEWjAPvYIAdLS_EKU3H8dYKe_Zhk';
   var APP_SLUG = 'ra-rapor-buku-induk';
+  // Kredensial admin diseragamkan dengan aplikasi PKG/PKKM.
+  // Admin tetap diverifikasi server-side; tidak ada password atau key di source.
+  var ADMIN_APP_SLUG = 'pkkm';
   var TIMEOUT_MS = 10000;
 
   function callRpc(fnName, params) {
@@ -122,7 +125,7 @@
     adminLogin: function (username, password) {
       return hashPassword(username, password).then(function (passwordHash) {
         return safeCall('admin_login', {
-          p_app_slug: APP_SLUG,
+          p_app_slug: ADMIN_APP_SLUG,
           p_username: String(username || '').trim().toLowerCase(),
           p_password_hash: passwordHash
         }, { success: null, reason: 'network_error' }).then(function (result) {
