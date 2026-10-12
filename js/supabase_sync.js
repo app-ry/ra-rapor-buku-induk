@@ -119,6 +119,17 @@
         });
       });
     },
+    adminLogin: function (username, password) {
+      return hashPassword(username, password).then(function (passwordHash) {
+        return safeCall('admin_login', {
+          p_app_slug: APP_SLUG,
+          p_username: String(username || '').trim().toLowerCase(),
+          p_password_hash: passwordHash
+        }, { success: null, reason: 'network_error' }).then(function (result) {
+          return { result: result, passwordHash: passwordHash };
+        });
+      });
+    },
     loginAccount: function (username, password) {
       return hashPassword(username, password).then(function (passwordHash) {
         return safeCall('login_account', {

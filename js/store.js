@@ -105,6 +105,28 @@ window.Store = (function() {
     return user;
   }
 
+  function loginRemoteAdmin(account, passwordHash) {
+    const username = String(account.username || 'admin').trim().toLowerCase();
+    const user = {
+      id: 'remote_admin_' + username,
+      username,
+      password: '',
+      passwordHash: '',
+      role: 'admin',
+      nama: account.fullname || username,
+      madrasah: account.madrasah || '',
+      remote_account: true,
+      remote_admin: true,
+      license_tier: 'admin'
+    };
+    const arr = list('users');
+    const i = arr.findIndex(x => x.remote_admin && x.username === username);
+    if (i >= 0) arr[i] = Object.assign({}, arr[i], user); else arr.push(user);
+    setList('users', arr);
+    setObj('session', { user_id: user.id, login_at: Date.now(), remote: true, admin: true });
+    return user;
+  }
+
   function logout() { localStorage.removeItem(_k('session')); }
   function currentUser() {
     const s = getObj('session', null);
@@ -154,7 +176,7 @@ window.Store = (function() {
     PREFIX, KEYS,
     list, setList, findById, add, update, remove, upsertBy,
     getObj, setObj,
-    login, loginRemoteAccount, logout, currentUser,
+    login, loginRemoteAccount, loginRemoteAdmin, logout, currentUser,
     activeTA, activeSem,
     log,
     migrateLegacyPasswords,

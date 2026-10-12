@@ -67,8 +67,22 @@ window.App = (function() {
       let user = null;
       const remoteConfigured = window.SupabaseSync && SupabaseSync.isConfigured();
       if (remoteConfigured) {
-        const remote = await SupabaseSync.loginAccount(u, p);
-        if (remote.result && remote.result.valid === true) {
+        // Akun admin pusat diverifikasi lewat RPC khusus; password tidak
+        // pernah disimpan atau dikirim plaintext ke Supabase.
+        const remote = u.toLowerCase() === 'admin'
+          ? await SupabaseSync.adminLogin(u, p)
+          : await SupabaseSync.loginAccount(u, p);
+        if (u.toLowerCase() === 'admin') {
+          if (remote.result && remote.result.success === true) {
+            user = Store.loginRemoteAdmin(remote.result, remote.passwordHash);
+          } else {
+            const reason = remote.result && remote.result.reason;
+            showAlert(reason === 'network_error'
+              ? 'Tidak dapat terhubung ke Pusat Lisensi.'
+              : _remoteReason(reason));
+            return;
+          }
+        } else if (remote.result && remote.result.valid === true) {
           user = Store.loginRemoteAccount(remote.result, remote.passwordHash);
         } else {
           const reason = remote.result && remote.result.reason;
