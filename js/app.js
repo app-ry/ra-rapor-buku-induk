@@ -74,6 +74,11 @@ window.App = (function() {
           : await SupabaseSync.loginAccount(u, p);
         if (u.toLowerCase() === 'admin') {
           if (remote.result && remote.result.success === true) {
+            // Simpan Admin Key hanya selama sesi browser agar panel penerbitan
+            // tidak meminta key kedua kali. Tidak disimpan ke localStorage/source.
+            if (remote.result.admin_key) {
+              sessionStorage.setItem('ra_license_admin_key', remote.result.admin_key);
+            }
             user = Store.loginRemoteAdmin(remote.result, remote.passwordHash);
           } else {
             const reason = remote.result && remote.result.reason;
