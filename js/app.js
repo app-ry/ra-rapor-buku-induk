@@ -17,7 +17,7 @@ window.App = (function() {
     { path:'pengguna', icon:'bi-people', label:'Pengaturan Pengguna', render:()=>Pages.pengguna.render(), roles:['admin'] },
     { path:'backup', icon:'bi-cloud-arrow-down', label:'Backup Data', render:()=>Pages.backup.render(), roles:['admin'] },
     { path:'license', icon:'bi-shield-lock', label:'Lisensi', render:()=>Pages.license.render(), roles:['admin'] },
-    { path:'terbitkan-lisensi', icon:'bi-key-fill', label:'Terbitkan Lisensi', render:()=>Pages.generate_license.render(), roles:['admin'] }
+    { path:'terbitkan-lisensi', icon:'bi-key-fill', label:'Terbitkan Lisensi', render:()=>Pages.generate_license.render(), roles:['admin'], adminCenterOnly:true }
   ];
 
   // Pages namespace
@@ -166,7 +166,7 @@ window.App = (function() {
 
   function renderNav(user) {
     const ul = document.getElementById('navList');
-    const items = ROUTES.filter(r => (!r.roles || r.roles.includes(user.role)) && !r.hidden);
+    const items = ROUTES.filter(r => (!r.roles || r.roles.includes(user.role)) && !r.hidden && (!r.adminCenterOnly || user.remote_admin === true));
     ul.innerHTML = items.map(r =>
       `<li><a href="#/${r.path}" data-path="${r.path}"><i class="bi ${r.icon}"></i> ${U.esc(r.label)}</a></li>`
     ).join('');
@@ -207,8 +207,8 @@ window.App = (function() {
       root.innerHTML = `<div class="empty"><i class="bi bi-question-circle"></i><div>Halaman tidak ditemukan</div></div>`;
       return;
     }
-    if (r.roles && !r.roles.includes(user.role)) {
-      root.innerHTML = `<div class="empty"><i class="bi bi-lock"></i><div>Akses ditolak untuk role <b>${user.role}</b></div></div>`;
+    if ((r.roles && !r.roles.includes(user.role)) || (r.adminCenterOnly && user.remote_admin !== true)) {
+      root.innerHTML = `<div class="empty"><i class="bi bi-lock"></i><div>Akses hanya untuk Admin Pusat.</div></div>`;
       return;
     }
     document.querySelectorAll('#navList a').forEach(a => {
